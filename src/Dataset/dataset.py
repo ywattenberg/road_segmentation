@@ -66,15 +66,14 @@ class MassachusettsDataset(BaseDataset):
         self.length = len(self.image_list)
 
     def __getitem__(self, index):
-        image = Image.open(os.path.join(self.image_path, self.image_list[index]))
+        image = Image.open(os.path.join(self.image_path, self.image_list[index])).convert('RGBA')
         mask = Image.open(os.path.join(self.mask_path, self.mask_list[index]))
         image = transforms.ToTensor()(image)
         mask = transforms.ToTensor()(mask)
         
-        print(image.shape, mask.shape)
-        mask = torch.cat([mask, torch.zeros(2, mask.shape[1], mask.shape[2])])
+        mask = torch.cat([mask, torch.zeros(3, mask.shape[1], mask.shape[2])])
         image, mask = transforms.RandomCrop(400)(torch.stack([image, mask])).unbind()
-        print(image.shape, mask.shape)
+
         if self.augment_images:
             augmented_stack = self.augment_image(image, mask)
             image = augmented_stack[0]
