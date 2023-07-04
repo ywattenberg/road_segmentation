@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader, random_split
 
 
 class Trainer():
-    def __init__(self, model, train_data, test_data, loss_fn, optimizer, split_test:float=None, device=None, batch_size=32, epochs=10, shuffle=True, name=None, test_metrics=None):
+    def __init__(self, model, train_data, test_data, loss_fn, optimizer, split_test:float=None, device=None, batch_size=32, epochs=10, shuffle=True, name=None, test_metrics=None, scheduler=None):
         if model == None or train_data == None:
             raise Exception("Model and train_data must be specified")
 
@@ -19,7 +19,7 @@ class Trainer():
                 train_data, test_data = random_split(train_data, (train_len, test_len))
 
         if optimizer == None:
-            self.optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=1e-8)
+            self.optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-8)
         else:    
             self.optimizer = optimizer
 
@@ -37,6 +37,9 @@ class Trainer():
             self.test_metrics = [loss_fn]
         else:
             self.test_metrics = test_metrics
+        
+        if scheduler == None:
+            self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, 'min', patience=2)
 
         self.batch_size = batch_size
         self.num_epochs = epochs
@@ -83,6 +86,10 @@ class Trainer():
                     for i, metric in enumerate(self.test_metrics):
                         loss = test_loss[i] / (batch+1)
                         print(f'Metric {i}: {loss:>7f}  [{batch:>5d}/{num_batches:>5d}]')
+        
+        if self.scheduler != None:
+            self.scheduler.step(test_loss[0])
+        
         for i, metric in enumerate(self.test_metrics):
             loss = test_loss[i] / num_batches
             print(f'Metric {i}: {loss:>7f}')
