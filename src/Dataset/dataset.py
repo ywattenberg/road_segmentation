@@ -15,6 +15,8 @@ class BaseDataset(Dataset):
             transforms.RandomRotation(90, fill=(0)),
             transforms.RandomCrop(400, fill=(0)),
         ])
+
+        self.pad = transforms.Pad(56, fill=(0))
         # self.color_augment = transforms.v2.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.2)
         super().__init__()
 
@@ -25,9 +27,13 @@ class BaseDataset(Dataset):
         raise NotImplementedError
 
     def augment_image(self, image, mask):
-        torch.stack([image, mask])
-        aug = self.augment(torch.stack([image, mask]))
-        return aug[0], aug[1][0, :, :]        
+        print(mask.shape)
+        print(image.shape)
+        aug = self.augment(torch.cat([image, mask]))
+        return aug[0:3, :, :], aug[4, :, :]        
+    
+    def resize(self, image, mask):
+        return self.pad(image), self.pad(mask)
 
     
 class ETHDataset(BaseDataset):
@@ -37,22 +43,20 @@ class ETHDataset(BaseDataset):
         self.image_path = image_path
         self.mask_path = mask_path
         self.image_list = os.listdir(self.image_path)
-        self.mask_list = os.listdir(self.mask_path)
         self.length = len(self.image_list)
     
     def __getitem__(self, index):
         # Image should be in RGBA format
         image = Image.open(os.path.join(self.image_path, self.image_list[index]))
-        mask = Image.open(os.path.join(self.mask_path, self.mask_list[index]))
+        mask = Image.open(os.path.join(self.mask_path, self.image_list[index]))
         image = transforms.ToTensor()(image)
         mask = transforms.ToTensor()(mask)
 
         if self.augment_images:
-            mask = torch.cat([mask, torch.zeros(3, 400, 400)])
             augmented_stack = self.augment_image(image, mask)
             image = augmented_stack[0]
             mask = augmented_stack[1]
-        return image, mask
+        return self.resize(image, mask)
 
 class MassachusettsDataset(BaseDataset):
     def __init__(self, image_path, mask_path, augment_images=False) -> None:
@@ -62,25 +66,25 @@ class MassachusettsDataset(BaseDataset):
         self.image_path = image_path
         self.mask_path = mask_path
         self.image_list = os.listdir(self.image_path)
-        self.mask_list = os.listdir(self.mask_path)
         self.length = len(self.image_list)
 
     def __getitem__(self, index):
-        image = Image.open(os.path.join(self.image_path, self.image_list[index])).convert('RGBA')
-        mask = Image.open(os.path.join(self.mask_path, self.mask_list[index]))
+        image = Image.open(os.path.join(self.image_path, self.image_list[index])).convert("RGBA")
+        mask = Image.open(os.path.join(self.mask_path, self.image_list[index])[:-1])
         image = transforms.ToTensor()(image)
         mask = transforms.ToTensor()(mask)
-        
-        mask = torch.cat([mask, torch.zeros(3, mask.shape[1], mask.shape[2])])
-        image, mask = transforms.RandomCrop(400)(torch.stack([image, mask])).unbind()
-
+        resized  = transforms.RandomCrop(400, 0)(torch.cat([image, mask]))
+        image = resized[0:4, :, :]
+        mask = resized[4, :, :]
+    
         if self.augment_images:
-            augmented_stack = self.augment_image(image, mask)
+            
+            augmented_stack = self.augment_image(image, mask.unsqueeze(0))
             image = augmented_stack[0]
             mask = augmented_stack[1]
-            return image, mask
+            return self.resize(image, mask)
         else:
-            return image, mask[0, :, :]
+            return self.resize(image, mask)
 
     
 
