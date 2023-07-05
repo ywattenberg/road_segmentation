@@ -2,10 +2,11 @@ import torch
 import time
 from datetime import datetime
 from torch.utils.data import DataLoader, random_split
+import pandas as pd
 
 
 class Trainer():
-    def __init__(self, model, train_data, test_data, loss_fn, optimizer, split_test:float=None, device=None, batch_size=32, epochs=10, shuffle=True, name=None, test_metrics=None, scheduler=None):
+    def __init__(self, model, train_data, test_data, loss_fn, optimizer, split_test:float=None, device=None, batch_size=32, epochs=10, shuffle=True, name=None, test_metrics=None, test_metric_names=None, scheduler=None, epochs_between_safe=1, batches_between_safe=None):
         if model == None or train_data == None:
             raise Exception("Model and train_data must be specified")
 
@@ -38,6 +39,12 @@ class Trainer():
         else:
             self.test_metrics = test_metrics
         
+        if test_metric_names == None:
+            self.test_metric_names = [f"Metric {i}" for i in range(len(self.test_metrics))]
+        else:
+            assert len(test_metric_names) == len(self.test_metrics)
+            self.test_metric_names = test_metric_names
+        
         if scheduler == None:
             self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, 'min', patience=2)
 
@@ -48,27 +55,34 @@ class Trainer():
 
         self.train_dataloader = DataLoader(train_data, batch_size=self.batch_size, shuffle=shuffle)
         self.test_dataloader = DataLoader(test_data, batch_size=self.batch_size, shuffle=shuffle)
+        self.epochs_between_safe=epochs_between_safe
+        self.batches_between_safe=batches_between_safe
+        
+        self.test_scores = pd.DataFrame(columns=(self.test_metric_names), index=["Epoch"])
+        self.train_loss = pd.DataFrame(columns=["Epoch", "Batch", "Curr Loss", "Running Loss"])
 
     def train_loop(self):
         size = len(self.train_dataloader.dataset)
         time_at_start = time.time()*1000
         self.model.train()
+        running_loss = []
         for batch, (*input, y) in enumerate(self.train_dataloader):
             self.optimizer.zero_grad()
             pred = self.model(input[0].to(self.device))
             loss = self.loss_fn(pred, y.to(self.device))
             loss.backward()
             self.optimizer.step()
-            
+            running_loss.append(loss.item())
             if batch % 100 == 0:
                 loss, current = loss.item(), batch * len(input[0])
                 print(f'loss: {loss:>7f}  [{current:>5d}/{size:>5d}]')
                 run_time = time.time()*1000 - time_at_start
                 print(f'time running: {run_time}, time per elem: {run_time/(current+1)}')
             
-            # if batch % 1000 == 0:
-            #     print('saving model...')
-            #     #torch.save(self.model, 'tmp_entire_model.pth')
+            if self.batches_between_safe is not None and batch % self.batches_between_safe == 0 and batch > self.batches_between_safe-1:
+                print('saving model...')
+                torch.save(self.model.state_dict(), f'tmp_model_weights.pth')
+        return running_loss
 
     def test_loop(self):
         size = len(self.test_dataloader.dataset)
@@ -85,35 +99,46 @@ class Trainer():
                 if batch % 100 == 0:
                     for i, metric in enumerate(self.test_metrics):
                         loss = test_loss[i] / (batch+1)
-                        print(f'Metric {i}: {loss:>7f}  [{batch:>5d}/{num_batches:>5d}]')
+                        print(f'{self.test_metric_names[i]}: {loss:>7f}  [{batch:>5d}/{num_batches:>5d}]')
         
         if self.scheduler != None:
             self.scheduler.step(test_loss[0])
-        
+        avg_test_loss = []
         for i, metric in enumerate(self.test_metrics):
             loss = test_loss[i] / num_batches
-            print(f'Metric {i}: {loss:>7f}')
-        return test_loss
+            avg_test_loss.append(loss)
+            print(f'{self.test_metric_names[i]}: {loss:>7f}')
+        return avg_test_loss
 
 
     def train_test(self):
         try:
+            print(f"Training model with name: {self.name}")
             for t in range(self.num_epochs):
                 print(f"Epoch {t + 1}\n-------------------------------")
                 self.train_loop()
-                self.current_test_loss = self.test_loop()
+                current_test_loss = self.test_loop()
+            
+                if current_test_loss[0] < self.test_scores.iloc[:, 0].min():
+                    print("New best model")
+                    torch.save(self.model.state_dict(), f'best_model_weights_{self.name}.pth')
+                
+                self.test_scores.loc[t] = current_test_loss
+
             print("Done!")
-            # torch.save(self.model.state_dict(), f'model_weights_{self.name}.pth')
+            if t % self.epochs_between_safe == 0:
+                torch.save(self.model.state_dict(), f'model_weights_{self.name}.pth')
             # torch.save(self.model, f'entire_model_{self.name}.pth')
         except KeyboardInterrupt:
             print('Abort...')
             safe = input('Safe model [y]es/[n]o: ')
             if safe == 'y' or safe == 'Y':
                 torch.save(self.model.state_dict(), f'model_weights_{self.name}.pth')
-                torch.save(self.model, f'entire_model_{self.name}.pth')
+                # torch.save(self.model, f'entire_model_{self.name}.pth')
             else: 
                 print('Not saving...')
-
+        
         torch.save(self.model.state_dict(), f'model_weights_{self.name}.pth')
-        torch.save(self.model, f'entire_model_{self.name}.pth')
+        return self.test_scores
+        # torch.save(self.model, f'entire_model_{self.name}.pth')
         
