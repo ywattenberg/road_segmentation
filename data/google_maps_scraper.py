@@ -6,6 +6,7 @@ import io
 import numpy as np
 from skimage.color import rgb2gray
 from skimage.io import imsave
+from multiprocessing import Pool
 
 
 
@@ -98,16 +99,20 @@ def save_image(image, mask, counter):
     print("saved image at path: {}".format(img_path))
     print("saved mask at path: {}".format(mask_path))
 
+def get_and_safe_img(i):
+    city_nr = np.random.randint(len(cities_boxes)) #pick a city
+    index = np.random.randint(len(cities_boxes[city_nr]))
+    box = cities_boxes[city_nr][index]
+
+    rand_x = uniform(box['w'], box['e'])
+    rand_y = uniform(box['n'], box['s'])
+
+    image, mask, new_mask, roadmap = pick_random_image_from_city(rand_y, rand_x)
+    image = get_center(image)
+    new_mask = get_center(new_mask)
+    save_image(image, new_mask, i)
+
 if __name__ == "__main__":
-    for i in range(1):
-        city_nr = np.random.randint(len(cities_boxes)) #pick a city
-        index = np.random.randint(len(cities_boxes[city_nr]))
-        box = cities_boxes[city_nr][index]
-
-        rand_x = uniform(box['w'], box['e'])
-        rand_y = uniform(box['n'], box['s'])
-
-        image, mask, new_mask, roadmap = pick_random_image_from_city(rand_y, rand_x)
-        image = get_center(image)
-        new_mask = get_center(new_mask)
-        save_image(image, new_mask, i)
+    with Pool(10) as pool:
+        pool.map(get_and_safe_img, range(5000,10000))
+        

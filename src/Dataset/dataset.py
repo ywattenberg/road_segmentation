@@ -86,4 +86,16 @@ class MassachusettsDataset(BaseDataset):
 
     
 
-    
+class GMapsDataset(ETHDataset):
+    def __getitem__(self, index):
+        # Image should be in RGBA format
+        image = Image.open(os.path.join(self.image_path, self.image_list[index])).convert("RGBA")
+        mask = Image.open(os.path.join(self.mask_path, self.image_list[index]))
+        image = transforms.ToTensor()(image)
+        mask = transforms.ToTensor()(mask)
+
+        if self.augment_images:
+            augmented_stack = self.augment_image(image, mask)
+            image = augmented_stack[0]
+            mask = augmented_stack[1]
+        return self.resize(image, mask)
