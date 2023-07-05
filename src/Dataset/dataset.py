@@ -27,10 +27,8 @@ class BaseDataset(Dataset):
         raise NotImplementedError
 
     def augment_image(self, image, mask):
-        print(mask.shape)
-        print(image.shape)
         aug = self.augment(torch.cat([image, mask]))
-        return aug[0:3, :, :], aug[4, :, :]        
+        return aug[0:4, :, :], aug[4, :, :]        
     
     def resize(self, image, mask):
         return self.pad(image), self.pad(mask)

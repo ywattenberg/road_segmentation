@@ -55,7 +55,7 @@ class Trainer():
         self.model.train()
         for batch, (*input, y) in enumerate(self.train_dataloader):
             self.optimizer.zero_grad()
-            pred = self.model(*[i.to(self.device) for i in input])
+            pred = self.model(input[0].to(self.device))
             loss = self.loss_fn(pred, y.to(self.device))
             loss.backward()
             self.optimizer.step()
@@ -66,9 +66,9 @@ class Trainer():
                 run_time = time.time()*1000 - time_at_start
                 print(f'time running: {run_time}, time per elem: {run_time/(current+1)}')
             
-            if batch % 1000 == 0:
-                print('saving model...')
-                torch.save(self.model, 'tmp_entire_model.pth')
+            # if batch % 1000 == 0:
+            #     print('saving model...')
+            #     #torch.save(self.model, 'tmp_entire_model.pth')
 
     def test_loop(self):
         size = len(self.test_dataloader.dataset)
@@ -103,8 +103,8 @@ class Trainer():
                 self.train_loop()
                 self.current_test_loss = self.test_loop()
             print("Done!")
-            torch.save(self.model.state_dict(), f'model_weights_{self.name}.pth')
-            torch.save(self.model, f'entire_model_{self.name}.pth')
+            # torch.save(self.model.state_dict(), f'model_weights_{self.name}.pth')
+            # torch.save(self.model, f'entire_model_{self.name}.pth')
         except KeyboardInterrupt:
             print('Abort...')
             safe = input('Safe model [y]es/[n]o: ')
@@ -113,4 +113,7 @@ class Trainer():
                 torch.save(self.model, f'entire_model_{self.name}.pth')
             else: 
                 print('Not saving...')
+
+        torch.save(self.model.state_dict(), f'model_weights_{self.name}.pth')
+        torch.save(self.model, f'entire_model_{self.name}.pth')
         
