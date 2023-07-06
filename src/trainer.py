@@ -3,6 +3,7 @@ import time
 from datetime import datetime
 from torch.utils.data import DataLoader, random_split
 import pandas as pd
+import numpy as np
 
 
 class Trainer():
@@ -65,17 +66,18 @@ class Trainer():
         size = len(self.train_dataloader.dataset)
         time_at_start = time.time()*1000
         self.model.train()
-        running_loss = []
+        running_loss = np.array([])
         for batch, (*input, y) in enumerate(self.train_dataloader):
             self.optimizer.zero_grad()
             pred = self.model(input[0].to(self.device))
-            loss = self.loss_fn(pred, y.to(self.device))
+            y= y.to(self.device).unsqueeze(1)
+            loss = self.loss_fn(pred, y)
             loss.backward()
             self.optimizer.step()
-            running_loss.append(loss.item())
-            if batch % 100 == 0:
-                loss, current = loss.item(), batch * len(input[0])
-                print(f'loss: {loss:>7f}  [{current:>5d}/{size:>5d}]')
+            running_loss = np.append(running_loss, loss.item())
+            if batch % 400 == 0:
+                current = batch * len(input[0])
+                print(f'loss: {(running_loss.sum()/(batch + 1)):>7f}  [{current:>5d}/{size:>5d}]')
                 run_time = time.time()*1000 - time_at_start
                 print(f'time running: {run_time}, time per elem: {run_time/(current+1)}')
             
@@ -116,7 +118,7 @@ class Trainer():
             print(f"Training model with name: {self.name}")
             for t in range(self.num_epochs):
                 print(f"Epoch {t + 1}\n-------------------------------")
-                self.train_loop()
+                running_loss = self.train_loop()
                 current_test_loss = self.test_loop()
             
                 if current_test_loss[0] < self.test_scores.iloc[:, 0].min():
