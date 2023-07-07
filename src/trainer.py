@@ -126,7 +126,7 @@ class Trainer():
                     torch.save(self.model.state_dict(), f'best_model_weights_{self.name}.pth')
                 
                 self.test_scores.loc[t] = current_test_loss
-
+                print("")
             print("Done!")
             if t % self.epochs_between_safe == 0:
                 torch.save(self.model.state_dict(), f'model_weights_{self.name}.pth')
