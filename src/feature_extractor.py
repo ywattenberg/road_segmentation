@@ -19,14 +19,14 @@ transform = torchvision.transforms.Compose([
 
 
 if __name__ == "__main__":
-    dataset = torchvision.datasets.EuroSAT(root='./data/EuroSAT_RGB', download=False, transform=transform)
+    dataset = torchvision.datasets.EuroSAT(root='data/', download=False, transform=transform)
     print(dataset)
     print(dataset.classes)
 
     # model = torchvision.models.mobilenet_v3_large(pretrained=True)
     # model.classifier[-1] = nn.Linear(1280, 10)
 
-    model = torchvision.models.vit_b_16(pretrained=True)
+    model = torchvision.models.vit_b_16(pretrained=False)
     model.heads = nn.Linear(768, 10)
 
     loss_fn = torch.nn.CrossEntropyLoss()
