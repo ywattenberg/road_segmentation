@@ -28,8 +28,9 @@ if __name__ == "__main__":
     print(dataset)
     print(dataset.classes)
 
-    # model = torchvision.models.mobilenet_v3_large(pretrained=True)
-    # model.classifier[-1] = nn.Linear(1280, 10)
+    model = torchvision.models.inception_v3(pretrained=True, progress=True)
+    print(model)
+    #model.classifier[-1] = nn.Linear(1280, 10)
 
     model = torchvision.models.vit_b_16(pretrained=False)
     model.heads = nn.Linear(768, 10)
@@ -39,5 +40,3 @@ if __name__ == "__main__":
     trainer = Trainer(model, dataset, None, loss_fn, None, split_test=0.2, batch_size=128, epochs=80, test_metrics=[loss_fn], test_metric_names=["BinaryCrossEntropy"], epochs_between_safe=10, name="feature_extractor_transformer")
     scores = trainer.train_test()
     scores.to_csv("test_scores_feature_transformer.csv")
-    
-    
