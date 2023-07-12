@@ -2,6 +2,7 @@ from segmentation_models_pytorch.losses import DiceLoss
 import numpy as np
 import cv2
 import torch
+from torch import nn
 
 def opencv_skelitonize(img):
     skel = np.zeros(img.shape, np.uint8)
@@ -20,19 +21,6 @@ def opencv_skelitonize(img):
             done = True
     return skel
 
-def dice_loss(pred, target):
-    '''
-    inputs shape  (batch, channel, height, width).
-    calculate dice loss per batch and channel of sample.
-    E.g. if batch shape is [64, 1, 128, 128] -> [64, 1]
-    '''
-    smooth = 1.
-    iflat = pred.view(*pred.shape[:2], -1) #batch, channel, -1
-    tflat = target.view(*target.shape[:2], -1)
-    intersection = (iflat * tflat).sum(-1)
-    return -((2. * intersection + smooth) /
-              (iflat.sum(-1) + tflat.sum(-1) + smooth))
-
 def soft_skeletonize(x, thresh_width=10):
     '''
     Differenciable aproximation of morphological skelitonization operaton
@@ -44,42 +32,26 @@ def soft_skeletonize(x, thresh_width=10):
         x = torch.nn.functional.relu(x - contour)
     return x
 
-def norm_intersection(center_line, vessel):
-    '''
-    inputs shape  (batch, channel, height, width)
-    intersection formalized by first ares
-    x - suppose to be centerline of vessel (pred or gt) and y - is vessel (pred or gt)
-    '''
-    print(center_line.shape, vessel.shape)
-    smooth = 1.
-    clf = center_line.view(*center_line.shape[:2], -1)
-    vf = vessel.view(*vessel.shape[:2], -1)
-    print(clf.shape, vf.shape)
-    intersection = (clf * vf).sum(-1)
-    return (intersection + smooth) / (clf.sum(-1) + smooth)
+class soft_cldice(nn.Module):
+    def __init__(self, iter_=10, smooth = 1.):
+        super(soft_cldice, self).__init__()
+        self.iter = iter_
+        self.smooth = smooth
 
-def soft_cldice_loss(pred, target, target_skeleton=None):
-    '''
-    inputs shape  (batch, channel, height, width).
-    calculate clDice loss
-    Because pred and target at moment of loss calculation will be a torch tensors
-    it is preferable to calculate target_skeleton on the step of batch forming,
-    when it will be in numpy array format by means of opencv
-    '''
-    cl_pred = soft_skeletonize(pred)
-    if target_skeleton is None:
-        target_skeleton = soft_skeletonize(target)
-    iflat = norm_intersection(cl_pred, target)
-    tflat = norm_intersection(target_skeleton, pred)
-    intersection = iflat * tflat
-    return -((2. * intersection) /
-              (iflat + tflat))
+    def forward(self, y_pred, y_true):
+        skel_pred = soft_skeletonize(y_pred, self.iter)
+        skel_true = soft_skeletonize(y_true, self.iter)
+        tprec = (torch.sum(torch.multiply(skel_pred, y_true)[:,1:,...])+self.smooth)/(torch.sum(skel_pred[:,1:,...])+self.smooth)    
+        tsens = (torch.sum(torch.multiply(skel_true, y_pred)[:,1:,...])+self.smooth)/(torch.sum(skel_true[:,1:,...])+self.smooth)    
+        cl_dice = 1.- 2.0*(tprec*tsens)/(tprec+tsens)
+        return cl_dice.mean()
 
-class SoftDiceClDice(torch.nn.Module):
+class SoftDiceClDice(nn.Module):
     def __init__(self, alpha=0.5):
         super(SoftDiceClDice, self).__init__()
         self.alpha = alpha
+        self.cl_dice = soft_cldice()
         self.dice_loss = DiceLoss(mode='binary')
     
     def forward(self, pred, target, target_skeleton=None):
-        return self.alpha * soft_cldice_loss(pred, target, target_skeleton).mean() + (1-self.alpha) * self.dice_loss(pred, target)
+        return self.alpha * self.cl_dice(pred, target) + (1-self.alpha) * self.dice_loss(pred, target)
