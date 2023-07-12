@@ -6,6 +6,7 @@ from torchvision import transforms
 import torch
 import torch.nn as nn
 from trainer import Trainer
+from Dataset.dataset import ETHDataset
 
 
 transform = torchvision.transforms.Compose([
@@ -19,16 +20,27 @@ transform = torchvision.transforms.Compose([
 
 
 if __name__ == "__main__":
-    dataset = torchvision.datasets.EuroSAT(root='data/', download=False, transform=transform)
-    print(dataset)
-    print(dataset.classes)
+    # dataset = torchvision.datasets.EuroSAT(root='data/', download=False, transform=transform)
+    # print(dataset)
+    # print(dataset.classes)
 
-    model = torchvision.models.inception_v3(pretrained=True, progress=True)
-    print(model)
+    base_path = "data/ethz-cil-road-segmentation-2023"
+    image_path = os.path.join(base_path, "training/images")
+    mask_path = os.path.join(base_path, "training/groundtruth")
+    dataset = ETHDataset(image_path, mask_path, augment_images=False)
+
+    # model = torchvision.models.mobilenet_v3_large()
+    # print(model)
     #model.classifier[-1] = nn.Linear(1280, 10)
 
-    model = torchvision.models.vit_b_16(pretrained=False)
-    model.heads = nn.Linear(768, 10)
+    model = torchvision.models.vgg13(pretrained=True)
+    model.classifier = nn.Identity()
+    model.avgpool = nn.Identity()
+    model.features[0] = nn.Conv2d(4, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    print(model)
+
+    y = model.features[:9](dataset[0][0].unsqueeze(0))
+    print(y.shape)
 
     # loss_fn = torch.nn.CrossEntropyLoss()
     # optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)
