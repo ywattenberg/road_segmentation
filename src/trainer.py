@@ -92,11 +92,14 @@ class Trainer():
         test_loss = [0 for _ in self.test_metrics]
         self.model.eval()
         with torch.no_grad():
-            for batch, (*input, y) in enumerate(self.test_dataloader):
+            for batch, (*input, y, skel) in enumerate(self.test_dataloader):
                 pred = self.model(*[i.to(self.device) for i in input])
                 y = y.to(self.device)
                 for i, metric in enumerate(self.test_metrics):
-                    loss = metric(pred, y)
+                    if i == len(self.test_metrics)-1:
+                        loss = metric(pred, y, skel.to(self.device))
+                    else :
+                        loss = metric(pred, y)
                     test_loss[i] += loss.item()
                 if (batch*self.batch_size) % (size*0.25) == 0:
                     for i, metric in enumerate(self.test_metrics):
