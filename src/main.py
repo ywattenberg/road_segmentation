@@ -7,8 +7,12 @@ from Loss.cldice import SoftDiceClDice
 import os
 import torch
 import torchvision
+import sys
 
 if __name__ == "__main__":
+    # use line-buffering for both stdout and stderr
+    sys.stdout = open(sys.stdout.fileno(), mode='w', buffering=1)
+    sys.stderr = open(sys.stderr.fileno(), mode='w', buffering=1)
     # base_path = "data/ethz-cil-road-segmentation-2023"
     # image_path = os.path.join(base_path, "training/images")
     # mask_path = os.path.join(base_path, "training/groundtruth")
@@ -26,6 +30,6 @@ if __name__ == "__main__":
 
     loss_fn = SoftDiceClDice(0.5)
     optimizer = Lion(model.parameters(), lr=1e-3, weight_decay=1e-3)
-    trainer = Trainer(model, dataset, None, loss_fn, None, split_test=0.2, batch_size=4, epochs=20, test_metrics=[JaccardLoss(mode='binary'), loss_fn], test_metric_names=["JaccardLoss", "DiceLoss"], epochs_between_safe=10, name="pretrained")
+    trainer = Trainer(model, dataset, None, loss_fn, None, split_test=0.2, batch_size=64, epochs=80, test_metrics=[JaccardLoss(mode='binary'), DiceLoss(mode='binary'), loss_fn], test_metric_names=["JaccardLoss", "DiceLoss", "clDice"], epochs_between_safe=1, name="pretrained_clDice")
     scores = trainer.train_test()
-    scores.to_csv("test_scores_pretrained.csv")
+    scores.to_csv("test_scores_clDice.csv")
