@@ -70,8 +70,9 @@ class Trainer():
         for batch, (*input, y) in enumerate(self.train_dataloader):
             self.optimizer.zero_grad()
             pred = self.model(input[0].to(self.device))
-            y= y.to(self.device)#.unsqueeze(1)
+            y= y.to(self.device).unsqueeze(1)
             loss = self.loss_fn(pred, y)
+            print(loss)
             loss.backward()
             self.optimizer.step()
             running_loss = np.append(running_loss, loss.item())
