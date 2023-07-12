@@ -38,9 +38,10 @@ class soft_cldice(nn.Module):
         self.iter = iter_
         self.smooth = smooth
 
-    def forward(self, y_pred, y_true):
+    def forward(self, y_pred, y_true, skel_true=None):
         skel_pred = soft_skeletonize(y_pred, self.iter)
-        skel_true = soft_skeletonize(y_true, self.iter)
+        if skel_true is None:
+            skel_true = soft_skeletonize(y_true, self.iter)
         tprec = (torch.sum(torch.multiply(skel_pred, y_true)[:,1:,...])+self.smooth)/(torch.sum(skel_pred[:,1:,...])+self.smooth)    
         tsens = (torch.sum(torch.multiply(skel_true, y_pred)[:,1:,...])+self.smooth)/(torch.sum(skel_true[:,1:,...])+self.smooth)    
         cl_dice = 1.- 2.0*(tprec*tsens)/(tprec+tsens)
@@ -54,4 +55,4 @@ class SoftDiceClDice(nn.Module):
         self.dice_loss = DiceLoss(mode='binary')
     
     def forward(self, pred, target, target_skeleton=None):
-        return self.alpha * self.cl_dice(pred, target) + (1-self.alpha) * self.dice_loss(pred, target)
+        return self.alpha * self.cl_dice(pred, target, target_skeleton) + (1-self.alpha) * self.dice_loss(pred, target)

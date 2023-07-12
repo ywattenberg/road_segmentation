@@ -67,15 +67,15 @@ class Trainer():
         time_at_start = time.time()*1000
         self.model.train()
         running_loss = np.array([])
-        for batch, (*input, y) in enumerate(self.train_dataloader):
+        for batch, (*input, y, skel) in enumerate(self.train_dataloader):
             self.optimizer.zero_grad()
             pred = self.model(input[0].to(self.device))
             y= y.to(self.device).unsqueeze(1)
-            loss = self.loss_fn(pred, y)
+            loss = self.loss_fn(pred, y, skel.to(self.device).unsqueeze(1))
             loss.backward()
             self.optimizer.step()
             running_loss = np.append(running_loss, loss.item())
-            if batch % 400 == 0:
+            if (batch*self.batch_size) % 1000 == 0:
                 current = batch * len(input[0])
                 print(f'loss: {(running_loss.sum()/(batch + 1)):>7f}  [{current:>5d}/{size:>5d}]')
                 run_time = time.time()*1000 - time_at_start
