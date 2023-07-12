@@ -23,7 +23,8 @@ if __name__ == "__main__":
     base_path = "data/additional_data"
     image_path = os.path.join(base_path, "images")
     mask_path = os.path.join(base_path, "masks")
-    dataset = GMapsDataset(image_path, mask_path, augment_images=True)
+    skeleton_path = os.path.join(base_path, "skel")
+    dataset = GMapsDataset(image_path, mask_path, skel_path=skeleton_path, augment_images=True)
 
     model = ResidualAttentionUNet(4, 1)
     # model.load_state_dict(torch.load('model_weights_2023-07-05_15.pth'))
