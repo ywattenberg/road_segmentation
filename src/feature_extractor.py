@@ -21,11 +21,6 @@ transform = torchvision.transforms.Compose([
 
 
 if __name__ == "__main__":
-<<<<<<< HEAD
-    # dataset = torchvision.datasets.EuroSAT(root='data/', download=False, transform=transform)
-    # print(dataset)
-    # print(dataset.classes)
-=======
     # use line-buffering for both stdout and stderr
     sys.stdout = open(sys.stdout.fileno(), mode='w', buffering=1)
     sys.stderr = open(sys.stderr.fileno(), mode='w', buffering=1)
@@ -33,7 +28,6 @@ if __name__ == "__main__":
     dataset = torchvision.datasets.EuroSAT(root='data/', download=False, transform=transform)
     print(dataset)
     print(dataset.classes)
->>>>>>> 8bc85d268a600151597667cd13ce4dba4c89f140
 
     base_path = "data/ethz-cil-road-segmentation-2023"
     image_path = os.path.join(base_path, "training/images")
@@ -44,24 +38,6 @@ if __name__ == "__main__":
     # print(model)
     #model.classifier[-1] = nn.Linear(1280, 10)
 
-<<<<<<< HEAD
-    model = torchvision.models.vgg13(pretrained=True)
-    model.classifier = nn.Identity()
-    model.avgpool = nn.Identity()
-    model.features[0] = nn.Conv2d(4, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-    print(model)
-
-    y = model.features[:9](dataset[0][0].unsqueeze(0))
-    print(y.shape)
-
-    # loss_fn = torch.nn.CrossEntropyLoss()
-    # optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)
-    # trainer = Trainer(model, dataset, None, loss_fn, None, split_test=0.2, batch_size=16, epochs=20, test_metrics=[loss_fn], test_metric_names=["BinaryCrossEntropy"], epochs_between_safe=10, name="feature_extractor_transformer")
-    # scores = trainer.train_test()
-    # scores.to_csv("test_scores_feature_transformer.csv")
-    
-    
-=======
     model = torchvision.models.vit_b_16(pretrained=False)
     model.heads = nn.Linear(768, 10)
     model.load_state_dict(torch.load("best_model_weights_feature_extractor_transformer.pth"))
@@ -70,4 +46,3 @@ if __name__ == "__main__":
     trainer = Trainer(model, dataset, None, loss_fn, None, split_test=0.2, batch_size=128, epochs=80, test_metrics=[loss_fn], test_metric_names=["BinaryCrossEntropy"], epochs_between_safe=10, name="feature_extractor_transformer")
     scores = trainer.train_test()
     scores.to_csv("test_scores_feature_transformer.csv")
->>>>>>> 8bc85d268a600151597667cd13ce4dba4c89f140
