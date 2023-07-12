@@ -8,7 +8,6 @@ from Loss.cldice import opencv_skelitonize
 
 def skeletonize_image(image_path, skeleton_dir):
     image = np.array(Image.open(image_path))
-    image = image[:,:,0]
     skeleton = opencv_skelitonize(image)
     skeleton = skeleton.astype(np.uint8)
     skeleton = Image.fromarray(skeleton)
