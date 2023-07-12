@@ -1,3 +1,4 @@
+from segmentation_models_pytorch.losses import DiceLoss
 import numpy as np
 import cv2
 import torch
@@ -49,9 +50,11 @@ def norm_intersection(center_line, vessel):
     intersection formalized by first ares
     x - suppose to be centerline of vessel (pred or gt) and y - is vessel (pred or gt)
     '''
+    print(center_line.shape, vessel.shape)
     smooth = 1.
     clf = center_line.view(*center_line.shape[:2], -1)
     vf = vessel.view(*vessel.shape[:2], -1)
+    print(clf.shape, vf.shape)
     intersection = (clf * vf).sum(-1)
     return (intersection + smooth) / (clf.sum(-1) + smooth)
 
@@ -71,3 +74,12 @@ def soft_cldice_loss(pred, target, target_skeleton=None):
     intersection = iflat * tflat
     return -((2. * intersection) /
               (iflat + tflat))
+
+class SoftDiceClDice(torch.nn.Module):
+    def __init__(self, alpha=0.5):
+        super(SoftDiceClDice, self).__init__()
+        self.alpha = alpha
+        self.dice_loss = DiceLoss(mode='binary')
+    
+    def forward(self, pred, target, target_skeleton=None):
+        return self.alpha * soft_cldice_loss(pred, target, target_skeleton).mean() + (1-self.alpha) * self.dice_loss(pred, target)
