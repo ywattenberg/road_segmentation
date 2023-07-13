@@ -1,7 +1,7 @@
 from trainer import Trainer
-from Model.model import ResidualAttentionUNet, AttentionUNet, UNet
+from Model.model import ResidualAttentionUNet, AttentionUNet, UNet, ResidualAttentionDuckUNet
 from lion_pytorch import Lion
-from Dataset.dataset import ETHDataset, MassachusettsDataset, GMapsDataset
+from Dataset.dataset import ETHDataset, MassachusettsDataset, GMapsDataset 
 from segmentation_models_pytorch.losses import DiceLoss, JaccardLoss
 from Loss.cldice import SoftDiceClDice
 import os
@@ -26,11 +26,11 @@ if __name__ == "__main__":
     skeleton_path = os.path.join(base_path, "skel")
     dataset = GMapsDataset(image_path, mask_path, skel_path=skeleton_path, augment_images=True)
 
-    model = ResidualAttentionUNet(4, 1)
+    model = ResidualAttentionDuckUNet(4, 1).to('cuda')
     # model.load_state_dict(torch.load('model_weights_2023-07-05_15.pth'))
 
     loss_fn = SoftDiceClDice(0.5)
     optimizer = Lion(model.parameters(), lr=1e-3, weight_decay=1e-3)
-    trainer = Trainer(model, dataset, None, loss_fn, None, split_test=0.2, batch_size=64, epochs=80, test_metrics=[JaccardLoss(mode='binary'), DiceLoss(mode='binary'), loss_fn], test_metric_names=["JaccardLoss", "DiceLoss", "clDice"], epochs_between_safe=1, name="pretrained_clDice")
+    trainer = Trainer(model, dataset, None, loss_fn, None, split_test=0.2, batch_size=64, epochs=60, test_metrics=[JaccardLoss(mode='binary'), DiceLoss(mode='binary'), loss_fn], test_metric_names=["JaccardLoss", "DiceLoss", "clDice"], epochs_between_safe=1, name="pretrained_clDice_duck")
     scores = trainer.train_test()
-    scores.to_csv("test_scores_clDice.csv")
+    scores.to_csv("test_scores_clDice_duck.csv")
