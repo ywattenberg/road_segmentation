@@ -1,5 +1,5 @@
 from trainer import Trainer
-from Model.model import ResidualAttentionUNet, AttentionUNet, UNet
+from Model.model import ResidualAttentionUNet, AttentionUNet, UNet, ResidualAttentionDuckUNet
 from lion_pytorch import Lion
 from Dataset.dataset import ETHDataset, MassachusettsDataset, GMapsDataset
 from segmentation_models_pytorch.losses import DiceLoss, JaccardLoss
@@ -9,7 +9,7 @@ import torch
 import torchvision
 import sys
 
-if __name__ == "__main__":
+if __name__ == "__main__":\
     # use line-buffering for both stdout and stderr
     sys.stdout = open(sys.stdout.fileno(), mode='w', buffering=1)
     sys.stderr = open(sys.stderr.fileno(), mode='w', buffering=1)
@@ -24,9 +24,9 @@ if __name__ == "__main__":
     image_path = os.path.join(base_path, "images")
     mask_path = os.path.join(base_path, "masks")
     skeleton_path = os.path.join(base_path, "skel")
-    dataset = GMapsDataset(image_path, mask_path, skel_path=skeleton_path, augment_images=True)
+    dataset = GMapsDataset(image_path, mask_path, skel_path=skeleton_path, augment_images=True, normalize=True)
 
-    model = ResidualAttentionUNet(4, 1)
+    model = ResidualAttentionDuckUNet(4, 1)
     # model.load_state_dict(torch.load('model_weights_2023-07-05_15.pth'))
 
     loss_fn = SoftDiceClDice(0.5)

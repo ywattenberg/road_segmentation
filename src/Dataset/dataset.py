@@ -5,6 +5,9 @@ import torch
 import os
 import numpy as np
 
+# [0.48015234 0.47847242 0.44929579 1.        ]
+# [0.2111749  0.19588756 0.19973656 0.        ]
+
 class BaseDataset(Dataset):
     def __init__(self, augment_images=False, normalize=False) -> None:
         self.length = 0
@@ -16,7 +19,7 @@ class BaseDataset(Dataset):
             transforms.RandomRotation(90, fill=(0)),
             transforms.RandomCrop(400, fill=(0)),
         ])
-        self.norm = transforms.Normalize(mean = [0.485, 0.456, 0.406, 0.45], std = [0.229, 0.224, 0.225, 0.225]),
+        self.norm = transforms.Normalize(mean = [0.48, 0.478, 0.449, 1], std = [0.211, 0.196, 0.200, 0]),
 
         self.pad = transforms.Pad(56, fill=(0))
         # self.color_augment = transforms.v2.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.2)
@@ -115,3 +118,4 @@ class GMapsDataset(ETHDataset):
             mask = augmented_stack[1]
             skeleton = augmented_stack[2]
         return self.resize(image, mask, skeleton)
+        # return image, mask, skeleton
