@@ -338,23 +338,6 @@ class ResidualAttentionDuckUNet(nn.Module):
     upscale128 = torch.cat([upscale128, d_scale128], dim=1)
     upscale256, sa256up = self.upsample5(upscale128)
     finaloutput = self.classification(upscale256)
-    print(f"Shapes:")
-    print(f"scale128: {scale128.shape}")
-    print(f"scale64: {scale64.shape}")
-    print(f"scale32: {scale32.shape}")
-    print(f"scale16: {scale16.shape}")
-    print(f"scale8: {scale8.shape}")
-    print(f"upscale16: {upscale16.shape}")
-    print(f"upscale32: {upscale32.shape}")
-    print(f"upscale64: {upscale64.shape}")
-    print(f"upscale128: {upscale128.shape}")
-    print(f"upscale256: {upscale256.shape}")
-    print(f"finaloutput: {finaloutput.shape}")
-    print(f"d_scale128: {d_scale128.shape}")
-    print(f"d_scale64: {d_scale64.shape}")
-    print(f"d_scale32: {d_scale32.shape}")
-    print(f"d_scale16: {d_scale16.shape}")
-    print(f"d_scale8: {d_scale8.shape}")
     return finaloutput
   
 # Shapes:
