@@ -75,7 +75,7 @@ class Trainer():
             loss.backward()
             self.optimizer.step()
             running_loss = np.append(running_loss, loss.item())
-            if (batch*self.batch_size) % (size*0.1) <= self.batch_size:
+            if (batch*self.batch_size) % (size*0.1) < self.batch_size:
                 current = batch * len(input[0])
                 print(f'loss: {(running_loss.sum()/(batch + 1)):>7f}  [{current:>5d}/{size:>5d}]')
                 run_time = time.time()*1000 - time_at_start
@@ -101,7 +101,7 @@ class Trainer():
                     else :
                         loss = metric(pred, y)
                     test_loss[i] += loss.item()
-                if (batch*self.batch_size) % (size*0.25) <= self.batch_size:
+                if (batch*self.batch_size) % (size*0.25) < self.batch_size:
                     for i, metric in enumerate(self.test_metrics):
                         loss = test_loss[i] / (batch+1)
                         print(f'{self.test_metric_names[i]}: {loss:>7f}  [{batch:>5d}/{num_batches:>5d}]')
