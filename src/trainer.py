@@ -67,15 +67,15 @@ class Trainer():
         time_at_start = time.time()*1000
         self.model.train()
         running_loss = np.array([])
-        for batch, (*input, y) in enumerate(self.train_dataloader):
+        for batch, (*input, y, skel) in enumerate(self.train_dataloader):
             self.optimizer.zero_grad()
             pred = self.model(input[0].to(self.device))
-            y= y.to(self.device)#.unsqueeze(1)
-            loss = self.loss_fn(pred, y)
+            y= y.to(self.device).unsqueeze(1)
+            loss = self.loss_fn(pred, y, skel.to(self.device).unsqueeze(1))
             loss.backward()
             self.optimizer.step()
             running_loss = np.append(running_loss, loss.item())
-            if batch % 400 == 0:
+            if (batch*self.batch_size) % (size*0.1) < self.batch_size:
                 current = batch * len(input[0])
                 print(f'loss: {(running_loss.sum()/(batch + 1)):>7f}  [{current:>5d}/{size:>5d}]')
                 run_time = time.time()*1000 - time_at_start
@@ -92,13 +92,16 @@ class Trainer():
         test_loss = [0 for _ in self.test_metrics]
         self.model.eval()
         with torch.no_grad():
-            for batch, (*input, y) in enumerate(self.test_dataloader):
+            for batch, (*input, y, skel) in enumerate(self.test_dataloader):
                 pred = self.model(*[i.to(self.device) for i in input])
                 y = y.to(self.device)
                 for i, metric in enumerate(self.test_metrics):
-                    loss = metric(pred, y)
+                    if i == len(self.test_metrics)-1:
+                        loss = metric(pred, y, skel.to(self.device))
+                    else :
+                        loss = metric(pred, y)
                     test_loss[i] += loss.item()
-                if batch % 100 == 0:
+                if (batch*self.batch_size) % (size*0.25) < self.batch_size:
                     for i, metric in enumerate(self.test_metrics):
                         loss = test_loss[i] / (batch+1)
                         print(f'{self.test_metric_names[i]}: {loss:>7f}  [{batch:>5d}/{num_batches:>5d}]')
