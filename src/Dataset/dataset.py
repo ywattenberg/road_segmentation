@@ -6,16 +6,17 @@ import os
 import numpy as np
 
 class BaseDataset(Dataset):
-    def __init__(self, augment_images=False) -> None:
+    def __init__(self, augment_images=False, normalize=False) -> None:
         self.length = 0
         self.augment_images = augment_images
+        self.normalize = normalize
         self.augment = transforms.Compose([
-            transforms.Normalize(mean = [0.485, 0.456, 0.406, 0.45], std = [0.229, 0.224, 0.225, 0.225]),
             transforms.RandomHorizontalFlip(),
             transforms.RandomVerticalFlip(),
             transforms.RandomRotation(90, fill=(0)),
             transforms.RandomCrop(400, fill=(0)),
         ])
+        self.norm = transforms.Normalize(mean = [0.485, 0.456, 0.406, 0.45], std = [0.229, 0.224, 0.225, 0.225]),
 
         self.pad = transforms.Pad(56, fill=(0))
         # self.color_augment = transforms.v2.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.2)
@@ -36,7 +37,7 @@ class BaseDataset(Dataset):
 
     
 class ETHDataset(BaseDataset):
-    def __init__(self, image_path, mask_path, skel_path=None, augment_images=False) -> None:
+    def __init__(self, image_path, mask_path, skel_path=None, augment_images=False, normalize=False) -> None:
         super().__init__()
         self.augment_images = augment_images
         self.image_path = image_path
@@ -44,6 +45,7 @@ class ETHDataset(BaseDataset):
         self.image_list = os.listdir(self.image_path)
         self.length = len(self.image_list)
         self.skel_path = skel_path
+        self.normalize = normalize
     
     def __getitem__(self, index):
         # Image should be in RGBA format
@@ -54,6 +56,9 @@ class ETHDataset(BaseDataset):
         mask = transforms.ToTensor()(mask)
         skeleton = transforms.ToTensor()(skeleton)
         
+        if self.normalize:
+            image = self.norm(image)
+
         if self.augment_images:
             augmented_stack = self.augment_image(image, mask)
             image = augmented_stack[0]
@@ -100,6 +105,9 @@ class GMapsDataset(ETHDataset):
         image = transforms.ToTensor()(image)
         mask = transforms.ToTensor()(mask)
         skeleton = transforms.ToTensor()(skeleton)
+
+        if self.normalize:
+            image = self.norm(image)
 
         if self.augment_images:
             augmented_stack = self.augment_image(image, mask, skeleton)
