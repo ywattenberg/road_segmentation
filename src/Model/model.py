@@ -17,6 +17,7 @@ import torch
 import numpy as np
 from torch import nn
 import random
+from Model.layers import Duck_block
 
 random.seed(0)
 np.random.seed(0)
@@ -283,3 +284,89 @@ class ResidualAttentionUNet(nn.Module):
     upscale256, sa256up = self.upsample5(upscale128)
     finaloutput = self.classification(upscale256)
     return finaloutput
+  
+class ResidualAttentionDuckUNet(nn.Module):
+  def __init__(self, inputChannel, outputChannel):
+    super().__init__()
+    self.downsample1 = DownSampleWithAttention(inputChannel, 32)
+    self.downsample2 = DownSampleWithAttention(32, 64)
+    self.downsample3 = DownSampleWithAttention(64, 128)
+    self.downsample4 = DownSampleWithAttention(128, 256)
+    self.downsample5 = DownSampleWithAttention(256, 512)
+
+    self.residualBlock1 = ResidualBlock(512, 512)
+    self.residualBlock2 = ResidualBlock(512, 512)
+    self.residualBlock3 = ResidualBlock(512, 512)
+
+    self.upsample1 = UpSampleWithAttention(512, 256)
+    self.upsample2 = UpSampleWithAttention(512, 128)
+    self.upsample3 = UpSampleWithAttention(256, 64)
+    self.upsample4 = UpSampleWithAttention(128, 32)
+    self.upsample5 = UpSampleWithAttention(64, 32)
+    self.classification = nn.Sequential(
+            nn.Conv2d(32, outputChannel, kernel_size=1),
+        )
+
+    self.duck1 = Duck_block(32, 32)
+    self.duck2 = Duck_block(64, 64)
+    self.duck3 = Duck_block(128, 128)
+    self.duck4 = Duck_block(256, 256)
+    self.duck5 = Duck_block(512, 512)
+
+
+  def forward(self, x):
+    scale128, sa128down = self.downsample1(x)
+    d_scale128 = self.duck1(scale128)
+    scale64, sa64down = self.downsample2(scale128 + d_scale128)
+    d_scale64 = self.duck2(scale64)
+    scale32, sa32down = self.downsample3(scale64 + d_scale64)
+    d_scale32 = self.duck3(scale32)
+    scale16, sa64down = self.downsample4(scale32 + d_scale32)
+    d_scale16 = self.duck4(scale16)
+    scale8, sa8down = self.downsample5(scale16 + d_scale16)
+    d_scale8 = self.duck5(scale8)
+    scale8, sa8down = self.residualBlock1(scale8 + d_scale8)
+    scale8, sa8down = self.residualBlock2(scale8)
+    scale8, sa8down = self.residualBlock3(scale8)
+    upscale16, sa16up = self.upsample1(scale8)
+    upscale16 = torch.cat([upscale16, d_scale16], dim=1)
+    upscale32, sa32up = self.upsample2(upscale16)
+    upscale32 = torch.cat([upscale32, d_scale32], dim=1)
+    upscale64, sa64up = self.upsample3(upscale32)
+    upscale64 = torch.cat([upscale64, d_scale64], dim=1)
+    upscale128, sa128up = self.upsample4(upscale64)
+    upscale128 = torch.cat([upscale128, d_scale128], dim=1)
+    upscale256, sa256up = self.upsample5(upscale128)
+    finaloutput = self.classification(upscale256)
+    print(f"Shapes:")
+    print(f"scale128: {scale128.shape}")
+    print(f"scale64: {scale64.shape}")
+    print(f"scale32: {scale32.shape}")
+    print(f"scale16: {scale16.shape}")
+    print(f"scale8: {scale8.shape}")
+    print(f"upscale16: {upscale16.shape}")
+    print(f"upscale32: {upscale32.shape}")
+    print(f"upscale64: {upscale64.shape}")
+    print(f"upscale128: {upscale128.shape}")
+    print(f"upscale256: {upscale256.shape}")
+    print(f"finaloutput: {finaloutput.shape}")
+    print(f"d_scale128: {d_scale128.shape}")
+    print(f"d_scale64: {d_scale64.shape}")
+    print(f"d_scale32: {d_scale32.shape}")
+    print(f"d_scale16: {d_scale16.shape}")
+    print(f"d_scale8: {d_scale8.shape}")
+    return finaloutput
+  
+# Shapes:
+# scale128: torch.Size([1, 32, 256, 256])
+# scale64: torch.Size([1, 64, 128, 128])
+# scale32: torch.Size([1, 128, 64, 64])
+# scale16: torch.Size([1, 256, 32, 32])
+# scale8: torch.Size([1, 512, 16, 16])
+# upscale16: torch.Size([1, 512, 32, 32])
+# upscale32: torch.Size([1, 256, 64, 64])
+# upscale64: torch.Size([1, 128, 128, 128])
+# upscale128: torch.Size([1, 64, 256, 256])
+# upscale256: torch.Size([1, 32, 512, 512])
+# finaloutput: torch.Size([1, 1, 512, 512])
+# torch.Size([1, 1, 512, 512])
