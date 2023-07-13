@@ -166,6 +166,7 @@ class Duck_block(nn.Module):
             nn.ReLU(),
             nn.BatchNorm2d(self.out_channels),
         )
+        self.out_norm = nn.BatchNorm2d(self.out_channels)
 
     def forward(self, input):
         x1 = self.widescope(input)
@@ -175,7 +176,7 @@ class Duck_block(nn.Module):
         x5 = self.conv3(input)
         x6 = self.seperate(input)
         x = x1 + x2 + x3 + x4 + x5 + x6
-        x = nn.BatchNorm2d(self.out_channels)(x)
+        x = self.out_norm(x)
         return x
 
 
