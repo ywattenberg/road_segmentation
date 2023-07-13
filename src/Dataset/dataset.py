@@ -10,6 +10,7 @@ class BaseDataset(Dataset):
         self.length = 0
         self.augment_images = augment_images
         self.augment = transforms.Compose([
+            transforms.Normalize(mean = [0.485, 0.456, 0.406, 0.45], std = [0.229, 0.224, 0.225, 0.225]),
             transforms.RandomHorizontalFlip(),
             transforms.RandomVerticalFlip(),
             transforms.RandomRotation(90, fill=(0)),
