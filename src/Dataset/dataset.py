@@ -63,7 +63,7 @@ class ETHDataset(BaseDataset):
             image = self.norm(image)
 
         if self.augment_images:
-            augmented_stack = self.augment_image(image, mask)
+            augmented_stack = self.augment_image(image, mask, skeleton)
             image = augmented_stack[0]
             mask = augmented_stack[1]
             skeleton = augmented_stack[2]
