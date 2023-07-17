@@ -1,14 +1,15 @@
-from random import uniform
 import requests
-from PIL import Image
-from PIL import ImageOps
+import os
 import io
 import numpy as np
+
+from random import uniform
 from skimage.color import rgb2gray
 from skimage.io import imsave
 from multiprocessing import Pool
-
-
+from PIL import Image
+from PIL import ImageOps
+from tqdm import tqdm
 
 los_angeles = [
     {'n': 34.269260, 'w': -118.604202, 's': 34.171040, 'e': -118.370722},
@@ -42,16 +43,9 @@ boston = [
     {'n': 42.387338, 'w': -71.141267, 's': 42.283792, 'e': -71.046510}
 ]
 cities_boxes = [los_angeles, chicago, houston, phoenix, philadelphia, san_francisco, boston]
+cities_names = ["los_angeles", "chicago", "houston", "phoenix", "philadelphia", "san_francisco", "boston"]
 
-from random import uniform
-import requests
-from PIL import Image
-from PIL import ImageOps
-import io
-import numpy as np
-from skimage.color import rgb2gray
-
-def pick_random_image_from_city(x, y, zoom_=18, width_=600, height_=600):
+def fetch_image(x, y, zoom_=18, width_=600, height_=600):
     
     url = "https://maps.googleapis.com/maps/api/staticmap?"
     center = "center=" + str(x) + "," + str(y)
@@ -64,10 +58,10 @@ def pick_random_image_from_city(x, y, zoom_=18, width_=600, height_=600):
 
     sat_url = url + center + zoom + size + sat_maptype + no_banners + api_key
     road_url = url + center + zoom + size + road_maptype + no_banners + "&style=feature:road|element:geometry|color:0x000000" + api_key
-    print(sat_url)
-    print(road_url)
+    # print(sat_url)
+    # print(road_url)
     req = requests.get(sat_url)
-    print(req.status_code)
+    # print(req.status_code)
     sat_tmp = Image.open(io.BytesIO(req.content))
     #sat_tmp = Image.open(io.BytesIO(requests.get(sat_url).content))
     road_tmp = Image.open(io.BytesIO(requests.get(road_url).content))
@@ -91,28 +85,73 @@ def get_center(image):
     return image[xx-200:xx+200, yy-200:yy+200]
 
 
-def save_image(image, mask, counter):
-    img_path = "data/additional_data/images/{}.png".format(counter)
-    mask_path = "data/additional_data/masks/{}.png".format(counter)
+def save_image(image, mask, x_fmt, y_fmt):
+    
+    img_path = "data/additional_data/images/{}-{}.png".format(x_fmt, y_fmt)
+    mask_path = "data/additional_data/masks/{}-{}.png".format(x_fmt, y_fmt)
     imsave(img_path, image)
     imsave(mask_path, (mask*255).astype(np.uint8))
-    print("saved image at path: {}".format(img_path))
-    print("saved mask at path: {}".format(mask_path))
-
-def get_and_safe_img(i):
+    # print("saved image at path: {}".format(img_path))
+    # print("saved mask at path: {}".format(mask_path))
+    
+def get_and_safe_img_random(i):
     city_nr = np.random.randint(len(cities_boxes)) #pick a city
     index = np.random.randint(len(cities_boxes[city_nr]))
     box = cities_boxes[city_nr][index]
 
     rand_x = uniform(box['w'], box['e'])
     rand_y = uniform(box['n'], box['s'])
-
-    image, mask, new_mask, roadmap = pick_random_image_from_city(rand_y, rand_x)
+    image, mask, new_mask, roadmap = fetch_image(rand_y, rand_x)
     image = get_center(image)
     new_mask = get_center(new_mask)
-    save_image(image, new_mask, i)
+    save_image(image, new_mask, rand_x, rand_y)
 
-if __name__ == "__main__":
+def download_random():
     with Pool(10) as pool:
-        pool.map(get_and_safe_img, range(5000,10000))
+        pool.map(get_and_safe_img_random, range(5000,10000))
+         
+def get_and_safe_img(x_vals, y_vals):
+    for x in x_vals:
+            for y in y_vals:
+                x = round(x, 14)
+                y = round(y, 14)
+                x_fmt = str(x).replace(".", "_").replace("-", "n")
+                y_fmt = str(y).replace(".", "_").replace("-", "n")
+                
+                if os.path.exists("data/additional_data/images/{}-{}.png".format(x_fmt, y_fmt)):
+                    continue
+                image, mask, new_mask, roadmap = fetch_image(x, y)
+                image = get_center(image)
+                new_mask = get_center(new_mask)
+                save_image(image, new_mask, x_fmt, y_fmt)
+
+def grid_download(threads=10, step_size=1e-4):
+    for city_idx in range(len(cities_boxes)):
+        print(f"Working on {cities_names[city_idx]}")
+        box = cities_boxes[city_idx][0]
         
+        vertical_iters = int((box['n'] - box['s']) / step_size) + 1
+        horizontal_iters = int((box['e'] - box['w']) / step_size)
+        print(f"Vertical iters: {vertical_iters}")
+        print(f"Horizontal iters: {horizontal_iters}")
+        for i in tqdm(range(0, horizontal_iters, 10), desc="Horizontal", leave=True):                
+            x = box['w'] + i * step_size
+            y_linspace = np.linspace(box['s'], box['n'], vertical_iters, endpoint=False)
+            
+            function_args = []
+            for j in range(len(y_linspace)):
+                y_low = y_linspace[j]
+                if j < len(y_linspace) - 1:
+                    y_high = y_linspace[j+1]
+                else:
+                    y_high = box['n']
+                
+                steps = int((y_high - y_low) / step_size) + 1
+                y_vals = np.linspace(y_low, y_high, steps, endpoint=False)
+                function_args.append(([x], y_vals))
+            # print(function_args)
+            with Pool(threads) as pool:
+                pool.starmap(get_and_safe_img, function_args)
+    
+if __name__ == "__main__":
+    grid_download(threads=10, step_size=1e-4)
