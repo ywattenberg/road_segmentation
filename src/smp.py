@@ -64,7 +64,7 @@ def main(model_name, encoder_name, encoder_weights):
         loss_fn,
         None,
         split_test=0.2,
-        batch_size=64,
+        batch_size=32,
         epochs=40,
         test_metrics=[JaccardLoss(mode="binary"), DiceLoss(mode="binary"), loss_fn],
         test_metric_names=["JaccardLoss", "DiceLoss", "clDice"],
