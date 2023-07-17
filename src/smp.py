@@ -56,7 +56,7 @@ def main(model_name, encoder_name, encoder_weights):
         classes=1,
     )
     loss_fn = SoftDiceClDice(0.5)
-    optimizer = Lion(model.parameters(), lr=1e-3, weight_decay=1e-3)
+    optimizer = Lion(model.parameters(), lr=5e-4, weight_decay=1e-3)
     trainer = Trainer(
         model,
         dataset,
