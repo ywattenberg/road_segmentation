@@ -51,12 +51,12 @@ def main(model_name, encoder_name, encoder_weights):
     model = model_func(
         encoder_name=encoder_name,
         encoder_weights=encoder_weights,
-        activation="sigmoid",
+        # activation="sigmoid",
         in_channels=4,
         classes=1,
     )
     loss_fn = SoftDiceClDice(0.5)
-    optimizer = Lion(model.parameters(), lr=5e-4, weight_decay=1e-3)
+    optimizer = Lion(model.parameters(), lr=1e-3, weight_decay=1e-3)
     trainer = Trainer(
         model,
         dataset,
@@ -64,7 +64,7 @@ def main(model_name, encoder_name, encoder_weights):
         loss_fn,
         None,
         split_test=0.2,
-        batch_size=32,
+        batch_size=64,
         epochs=40,
         test_metrics=[JaccardLoss(mode="binary"), DiceLoss(mode="binary"), loss_fn],
         test_metric_names=["JaccardLoss", "DiceLoss", "clDice"],
