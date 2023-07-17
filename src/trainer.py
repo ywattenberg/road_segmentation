@@ -121,7 +121,7 @@ class Trainer:
                 and batch > self.batches_between_safe - 1
             ):
                 print("saving model...")
-                torch.save(self.model.state_dict(), f"tmp_model_weights.pth")
+                torch.save(self.model.state_dict(), f"models/tmp_model_weights.pth")
         return running_loss
 
     def test_loop(self):
@@ -172,26 +172,31 @@ class Trainer:
                         print("New best model")
                         torch.save(
                             self.model.state_dict(),
-                            f"best_model_weights_{self.name}.pth",
+                            f"models/best_model_weights_{self.name}.pth",
                         )
                 except Exception as e:
                     print(f"Baka")
+                    print(e)
 
                 self.test_scores.loc[t] = current_test_loss
                 print("")
             print("Done!")
             if t % self.epochs_between_safe == 0:
-                torch.save(self.model.state_dict(), f"model_weights_{self.name}.pth")
-            # torch.save(self.model, f'entire_model_{self.name}.pth')
+                torch.save(
+                    self.model.state_dict(), f"models/model_weights_{self.name}.pth"
+                )
+            # torch.save(self.model, f'models/entire_model_{self.name}.pth')
         except KeyboardInterrupt:
             print("Abort...")
             safe = input("Safe model [y]es/[n]o: ")
             if safe == "y" or safe == "Y":
-                torch.save(self.model.state_dict(), f"model_weights_{self.name}.pth")
-                # torch.save(self.model, f'entire_model_{self.name}.pth')
+                torch.save(
+                    self.model.state_dict(), f"models/model_weights_{self.name}.pth"
+                )
+                # torch.save(self.model, f'models/entire_model_{self.name}.pth')
             else:
                 print("Not saving...")
 
-        torch.save(self.model.state_dict(), f"model_weights_{self.name}.pth")
+        torch.save(self.model.state_dict(), f"models/model_weights_{self.name}.pth")
         return self.test_scores
-        # torch.save(self.model, f'entire_model_{self.name}.pth')
+        # torch.save(self.model, f'models/entire_model_{self.name}.pth')
