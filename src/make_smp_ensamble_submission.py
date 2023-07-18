@@ -86,6 +86,9 @@ def main(model_dir, weighted, device, batch_size, output, threshold):
         mask = Image.fromarray(mask)
         mask.save(os.path.join("submission", name))
     subprocess.run([os.environ["PYTHONPATH"], "src/mask_to_submission.py", "--base_dir", "submission", "--submission_filename", output])
+
+if __name__ == "__main__":
+    main()
     
 
     
