@@ -34,12 +34,39 @@ from trainer import Trainer
     default="imagenet",
     type=str,
 )
-def main(model_name, encoder_name, encoder_weights):
+@click.option(
+    "--epochs",
+    "-e",
+    help="Number of epochs to train for",
+    default=1,
+    type=int,
+)
+@click.option(
+    "--batch-size",
+    "-bs",
+    help="Batch size",
+    default=64,
+    type=int,
+)
+@click.option(
+    "--learning-rate",
+    "-lr",
+    help="Learning rate",
+    default=1e-3,
+    type=float,
+)
+@click.option(
+    "--base-path",
+    "-bp",
+    help="Base path for data",
+    default="/cluster/scratch/siwachte/additional_data",
+    type=str,
+)
+def main(model_name, encoder_name, encoder_weights, epochs, batch_size, learning_rate, base_path):
     # use line-buffering for both stdout and stderr
     sys.stdout = open(sys.stdout.fileno(), mode="w", buffering=1)
     sys.stderr = open(sys.stderr.fileno(), mode="w", buffering=1)
 
-    base_path = "/cluster/scratch/siwachte/additional_data"
     image_path = os.path.join(base_path, "images")
     mask_path = os.path.join(base_path, "masks")
     skeleton_path = os.path.join(base_path, "skel")
@@ -56,7 +83,7 @@ def main(model_name, encoder_name, encoder_weights):
         classes=1,
     )
     loss_fn = SoftDiceClDice(0.5)
-    optimizer = Lion(model.parameters(), lr=1e-3, weight_decay=1e-3)
+    optimizer = Lion(model.parameters(), lr=learning_rate, weight_decay=1e-3)
     trainer = Trainer(
         model,
         dataset,
@@ -64,8 +91,8 @@ def main(model_name, encoder_name, encoder_weights):
         loss_fn,
         None,
         split_test=0.2,
-        batch_size=64,
-        epochs=40,
+        batch_size=batch_size,
+        epochs=epochs,
         test_metrics=[JaccardLoss(mode="binary"), DiceLoss(mode="binary"), loss_fn],
         test_metric_names=["JaccardLoss", "DiceLoss", "clDice"],
         epochs_between_safe=1,

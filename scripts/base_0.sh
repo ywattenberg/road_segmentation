@@ -21,6 +21,10 @@ echo "In directory:    $(pwd)"
 echo "Starting on:     $(date)"
 echo "SLURM_JOB_ID:    ${SLURM_JOB_ID}"
 
+rsync -ah --stats /cluster/scratch/$USER/additional_data $TMPDIR
+
+echo "Data copied at:     $(date)"
+
 # Binary or script to execute
 # load modules
 module load gcc/8.2.0 python/3.11.2 cuda/11.8.0 cudnn/8.8.1.3 eth_proxy curl jq
