@@ -179,7 +179,9 @@ class Trainer:
                     print(f"Baka")
                     print(e)
 
-                self.test_scores.iloc[t] = current_test_loss
+                self.test_scores = pd.concat(
+                    [self.test_scores, current_test_loss], ignore_index=True
+                )
                 print("")
             print("Done!")
             if t % self.epochs_between_safe == 0:
