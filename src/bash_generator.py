@@ -11,7 +11,7 @@ def create_bash_script(model_name, encoder_name, encoder_weight):
     output = f"#SBATCH --output=/cluster/home/%u/road_segmentation/log/{model_name}-{encoder_name}-{encoder_weight}-%j.out\n"
     error = f"#SBATCH --error=/cluster/home/%u/road_segmentation/log/{model_name}-{encoder_name}-{encoder_weight}-%j.err\n"
     cpus = "#SBATCH --cpus-per-task=4\n"
-    gpus = "#SBATCH --gres=a100_80gb:1\n"
+    gpus = "#SBATCH --gpus=a100_80gb:1\n"
     mem = "#SBATCH --mem-per-cpu=8G\n"
 
     # model settings
