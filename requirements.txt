@@ -5,3 +5,4 @@ pandas
 opencv-python
 matplotlib
 segmentation-models-pytorch
+absl-py
