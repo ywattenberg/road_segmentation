@@ -1,7 +1,14 @@
 import pandas as pd
 
 
-def create_bash_script(model_name, encoder_name, encoder_weight, epochs=1, batch_size=64, learning_rate=1e-3):
+def create_bash_script(
+    model_name,
+    encoder_name,
+    encoder_weight,
+    epochs=1,
+    batch_size=64,
+    learning_rate=1e-3,
+):
     #!/bin/bash line
     bin_bash_line = "#!/bin/bash\n"
     # slurm settings
@@ -81,7 +88,25 @@ encoder_weights = ["imagenet"]
 for model_name in model_names:
     for encoder_name in encoder_names:
         for encoder_weight in encoder_weights:
-            if encoder_name == "resnet101" or encoder_name == "efficientnet-b5":
-                create_bash_script(model_name, encoder_name, encoder_weight, epochs=40, batch_size=32, learning_rate=1e-3)
+            if (
+                encoder_name == "resnet101"
+                or encoder_name == "efficientnet-b5"
+                or encoder_name == "resnet50"
+            ):
+                create_bash_script(
+                    model_name,
+                    encoder_name,
+                    encoder_weight,
+                    epochs=40,
+                    batch_size=32,
+                    learning_rate=1e-3,
+                )
             else:
-                create_bash_script(model_name, encoder_name, encoder_weight, epochs=40, batch_size=64, learning_rate=1e-3)
+                create_bash_script(
+                    model_name,
+                    encoder_name,
+                    encoder_weight,
+                    epochs=40,
+                    batch_size=64,
+                    learning_rate=1e-3,
+                )
