@@ -163,11 +163,12 @@ class Trainer:
                 running_loss = self.train_loop()
                 current_test_loss = self.test_loop()
                 current_test_loss["epoch"] = t
+                print("Current test loss:\n", current_test_loss)
 
                 try:
                     if (
                         current_test_loss["DiceLoss"]
-                        < self.test_scores.loc["DiceLoss"].min()
+                        < self.test_scores["DiceLoss"].min()
                     ):
                         print("New best model")
                         torch.save(
@@ -178,7 +179,7 @@ class Trainer:
                     print(f"Baka")
                     print(e)
 
-                self.test_scores.loc[t] = current_test_loss
+                self.test_scores.iloc[t] = current_test_loss
                 print("")
             print("Done!")
             if t % self.epochs_between_safe == 0:

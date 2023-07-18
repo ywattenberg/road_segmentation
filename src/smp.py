@@ -100,7 +100,7 @@ def main(model_name, encoder_name, encoder_weights, epochs, batch_size, learning
     )
 
     scores = trainer.train_test()
-    scores.to_csv(f"smp/{model_name}-{encoder_name}-{encoder_weights}-clDice.csv")
+    scores.to_csv(f"smp/{model_name}-{encoder_name}-{encoder_weights}-clDice.csv", index=False)
 
 
 if __name__ == "__main__":
