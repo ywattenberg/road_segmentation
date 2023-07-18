@@ -305,6 +305,7 @@ class ResidualAttentionDuckUNet(nn.Module):
     self.upsample5 = UpSampleWithAttention(64, 32)
     self.classification = nn.Sequential(
             nn.Conv2d(32, outputChannel, kernel_size=1),
+            nn.Sigmoid()
         )
 
     self.duck1 = Duck_block(32, 32)
