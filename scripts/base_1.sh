@@ -1,5 +1,5 @@
 echo "Run name: ${run_name}"
-echo "Model name: ${model_nam}e"
+echo "Model name: ${model_name}"
 echo "Encoder name: ${encoder_name}"
 echo "Encoder weight: ${encoder_weight}"
 echo "Epochs: ${epochs}"
