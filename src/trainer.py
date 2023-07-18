@@ -180,7 +180,10 @@ class Trainer:
                     print(e)
 
                 self.test_scores = pd.concat(
-                    [self.test_scores, current_test_loss], ignore_index=True
+                    [
+                        self.test_scores,
+                        pd.DataFrame(current_test_loss, index=["epoch"]),
+                    ]
                 )
                 print("")
             print("Done!")
