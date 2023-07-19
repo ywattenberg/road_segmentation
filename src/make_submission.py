@@ -7,7 +7,7 @@ import segmentation_models_pytorch as smp
 from torchvision import transforms
 from Dataset.dataset import ETHDataset
 from PIL import Image
-from Model.model import ResidualAttentionUNet
+from Model.model import ResidualAttentionUNet, ResidualAttentionDuckUNet
 from torchvision.utils import save_image
 
 

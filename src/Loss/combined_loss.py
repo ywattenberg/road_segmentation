@@ -13,8 +13,8 @@ class DiceLovaszBCELoss(nn.Module):
 
     def forward(self, y_pr, y_gt):
         dice = self.dice(y_pr, y_gt)
-        lovasz = self.lovasz(y_pr, y_gt)
+        lovasz = self.lovasz(y_pr, y_gt)/10
         bce = self.BCE(y_pr, y_gt)
-        print(f"dice: {dice}, lovasz: {lovasz}, bce: {bce}")
+        #print(f"dice: {dice}, lovasz: {lovasz}, bce: {bce}")
         return  self.beta*bce + (1-self.beta)*(self.alpha * dice + (1 - self.alpha) * lovasz)
     

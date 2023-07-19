@@ -101,7 +101,7 @@ class Trainer:
             self.optimizer.zero_grad()
             pred = self.model(input[0].to(self.device))
             y = y.to(self.device).unsqueeze(1)
-            loss = self.loss_fn(pred, y, skel.to(self.device).unsqueeze(1))
+            loss = self.loss_fn(pred, y) #skel.to(self.device).unsqueeze(1))
             loss.backward()
             self.optimizer.step()
             running_loss = np.append(running_loss, loss.item())
@@ -132,12 +132,9 @@ class Trainer:
         with torch.no_grad():
             for batch, (*input, y, skel) in enumerate(self.test_dataloader):
                 pred = self.model(*[i.to(self.device) for i in input])
-                y = y.to(self.device)
+                y = y.to(self.device).unsqueeze(1)
                 for i, metric in enumerate(self.test_metrics):
-                    if i == len(self.test_metrics) - 1:
-                        loss = metric(pred, y, skel.to(self.device))
-                    else:
-                        loss = metric(pred, y)
+                    loss = metric(pred, y)
                     test_loss[i] += loss.item()
                 if (batch * self.batch_size) % (size * 0.25) < self.batch_size:
                     for i, metric in enumerate(self.test_metrics):
