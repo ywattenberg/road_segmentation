@@ -83,7 +83,7 @@ def main(model_dir, weighted, device, batch_size, output, threshold):
     masks = np.array(masks).sum(axis=0)
     masks = (masks > threshold).astype(np.uint8)*255
     for mask, name in zip(masks, os.listdir(image_path)):
-        mask = Image.fromarray(mask)
+        mask = Image.fromarray(mask.squeeze())
         mask.save(os.path.join("submission", name))
     subprocess.run([os.environ["PYTHONPATH"], "src/mask_to_submission.py", "--base_dir", "submission", "--submission_filename", output])
 
