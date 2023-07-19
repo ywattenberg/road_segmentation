@@ -72,7 +72,7 @@ class ETHDataset(BaseDataset):
         if self.normalize:
             image = self.norm(image)
         if self.submission:
-            return self.resize(image)
+            return self.resize(image)[0]
     
         mask = Image.open(os.path.join(self.mask_path, self.image_list[index]))
         skeleton = Image.open(os.path.join(self.skel_path, self.image_list[index]))
