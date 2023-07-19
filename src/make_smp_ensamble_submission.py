@@ -9,6 +9,7 @@ from Dataset.dataset import ETHDataset
 from torch.utils.data import DataLoader
 import click 
 import subprocess
+import sys
 
 MODEL_PATHS = ["model_weights_UnetPlusPlus-resnet34-imagenet-clDice.pth", "model_weights_FPN-resnet34-imagenet-clDice.pth", "model_weights_DeepLabV3Plus-resnet34-imagenet-clDice.pth"]
 TEST_SCORES = [0.1911, 0.1915, 0.1848]
@@ -56,12 +57,18 @@ def calc_weights_from_scores(scores):
 @click.option("--batch_size", "-b", default=8, help="Batch size")
 @click.option("--output", "-o", default="submission.csv", help="Output file")
 @click.option("--threshold", "-t", default=0.4, help="Threshold for mask")
-def main(model_dir, weighted, device, batch_size, output, threshold):
+@click.option("--train", "-t", is_flag=True, help="Use training set instead of test set")
+def main(model_dir, weighted, device, batch_size, output, threshold, train):
+    sys.stdout = open(sys.stdout.fileno(), mode="w", buffering=1)
+    sys.stderr = open(sys.stderr.fileno(), mode="w", buffering=1)
     if device is None:
        device = "cuda" if torch.cuda.is_available() else "cpu"
 
     base_path = "data/ethz-cil-road-segmentation-2023"
-    image_path = os.path.join(base_path, "test/images")
+    if not train:
+        image_path = os.path.join(base_path, "test/images")
+    else:
+        image_path = os.path.join(base_path, "training/images")
     #mask_path = os.path.join(base_path, "training/groundtruth")
     dataset = ETHDataset(image_path, None, augment_images=False, normalize=False, submission=True)
 
@@ -72,20 +79,23 @@ def main(model_dir, weighted, device, batch_size, output, threshold):
         weights = np.ones(len(MODEL_PATHS)) / len(MODEL_PATHS)
 
     masks = []
-    for path in MODEL_PATHS:
+    for path, weight in zip(MODEL_PATHS, weights):
         model = path.split("_")[-1]
         model, encoder = model.split("-")[0:2]
+        print(f"Using model {model} with encoder {encoder} and weight {weight}")
         model = get_model(model, encoder, os.path.join(model_dir, path), device=device)
         masks.append(get_masks(model, dataset, batch_size=batch_size, device=device))
     
     masks = [mask.cpu().numpy() for mask in masks]
     masks = [mask*weight for mask, weight in zip(masks, weights)]
     masks = np.array(masks).sum(axis=0)
-    masks = (masks > threshold).astype(np.uint8)*255
+    masks = ((masks > threshold)*255).astype(np.uint8)
+
     for mask, name in zip(masks, os.listdir(image_path)):
         mask = Image.fromarray(mask.squeeze())
         mask.save(os.path.join("submission", name))
-    subprocess.run([os.environ["PYTHONPATH"], "src/mask_to_submission.py", "--base_dir", "submission", "--submission_filename", output])
+    if not train:
+        subprocess.run([os.environ["PYTHONPATH"], "src/mask_to_submission.py", "--base_dir", "submission", "--submission_filename", output])
 
 if __name__ == "__main__":
     main()
