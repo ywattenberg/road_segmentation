@@ -67,25 +67,24 @@ class ETHDataset(BaseDataset):
     def __getitem__(self, index):
         # Image should be in RGBA format
         image = Image.open(os.path.join(self.image_path, self.image_list[index]))
-        if self.submission:
-            mask = torch.zeros((400, 400))
-            skeleton = torch.zeros((400, 400))
-        else:
-            mask = Image.open(os.path.join(self.mask_path, self.image_list[index]))
-            skeleton = Image.open(os.path.join(self.skel_path, self.image_list[index]))
-            mask = transforms.ToTensor()(mask)
-            skeleton = transforms.ToTensor()(skeleton)
-
         image = transforms.ToTensor()(image)
 
         if self.normalize:
             image = self.norm(image)
+        if self.submission:
+            return self.resize(image)
+    
+        mask = Image.open(os.path.join(self.mask_path, self.image_list[index]))
+        skeleton = Image.open(os.path.join(self.skel_path, self.image_list[index]))
+        mask = transforms.ToTensor()(mask)
+        skeleton = transforms.ToTensor()(skeleton)
 
         if self.augment_images:
             augmented_stack = self.augment_image(image, mask, skeleton)
             image = augmented_stack[0]
             mask = augmented_stack[1]
             skeleton = augmented_stack[2]
+
         return self.resize(image, mask, skeleton)
 
 
