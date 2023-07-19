@@ -33,7 +33,7 @@ def get_masks(model, dataset, batch_size, device=None):
     reshape = transforms.CenterCrop(400)
     loader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
     masks = None
-    for x,y in loader:
+    for x in loader:
         images = x.to(device) if device is not None else x
         with torch.no_grad():
             pred = model(images)
