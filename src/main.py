@@ -6,9 +6,10 @@ from Model.model import (
     ResidualAttentionDuckUNet,
 )
 from lion_pytorch import Lion
-from Dataset.dataset import ETHDataset, MassachusettsDataset, GMapsDataset
+from Dataset.dataset import ETHDataset, MassachusettsDataset, GMapsDataset 
 from segmentation_models_pytorch.losses import DiceLoss, JaccardLoss
 from Loss.cldice import SoftDiceClDice
+from Loss.combined_loss import DiceLovaszBCELoss
 import os
 import torch
 import torchvision
@@ -37,10 +38,10 @@ if __name__ == "__main__":  # use line-buffering for both stdout and stderr
     )
 
     model = ResidualAttentionDuckUNet(4, 1)
-    # model.load_state_dict(torch.load('model_weights_2023-07-05_15.pth'))
+    model.load_state_dict(torch.load('best_model_weights_pretrained_clDice_duck_final.pth'))
 
-    loss_fn = SoftDiceClDice(0.5)
-    optimizer = Lion(model.parameters(), lr=1e-3, weight_decay=1e-3)
+    loss_fn = DiceLovaszBCELoss(alpha=0.5, beta=0.5)
+    optimizer = Lion(model.parameters(), lr=1e-5, weight_decay=1e-6)
     trainer = Trainer(
         model,
         dataset,
@@ -48,12 +49,12 @@ if __name__ == "__main__":  # use line-buffering for both stdout and stderr
         loss_fn,
         None,
         split_test=0.2,
-        batch_size=64,
-        epochs=80,
-        test_metrics=[JaccardLoss(mode="binary"), DiceLoss(mode="binary"), loss_fn],
-        test_metric_names=["JaccardLoss", "DiceLoss", "clDice"],
+        batch_size=32,
+        epochs=10,
+        test_metrics=[DiceLoss(mode="binary"), JaccardLoss(mode="binary"),  loss_fn],
+        test_metric_names=["DiceLoss", "JaccardLoss", "DiceLovaszBCELoss"],
         epochs_between_safe=1,
-        name="pretrained_clDice",
+        name="test+loss",
     )
     scores = trainer.train_test()
-    scores.to_csv("test_scores_clDice.csv")
+    scores.to_csv("test+loss.csv")

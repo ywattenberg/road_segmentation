@@ -22,11 +22,9 @@ class BaseDataset(Dataset):
                 transforms.RandomCrop(400, fill=(0)),
             ]
         )
-        self.norm = (
-            transforms.Normalize(
-                mean=[0.48, 0.478, 0.449, 1], std=[0.211, 0.196, 0.200, 0]
-            ),
-        )
+        self.norm = transforms.Normalize(
+                mean=[0.48, 0.478, 0.449, 0.5], std=[0.211, 0.196, 0.200, 0.5])
+
 
         self.pad = transforms.Pad(56, fill=(0))
         # self.color_augment = transforms.v2.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.2)
