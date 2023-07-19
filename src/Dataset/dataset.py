@@ -75,11 +75,10 @@ class ETHDataset(BaseDataset):
         else:
             mask = Image.open(os.path.join(self.mask_path, self.image_list[index]))
             skeleton = Image.open(os.path.join(self.skel_path, self.image_list[index]))
-            image = transforms.ToTensor()(image)
             mask = transforms.ToTensor()(mask)
-        
-        
-        skeleton = transforms.ToTensor()(skeleton)
+            skeleton = transforms.ToTensor()(skeleton)
+
+        image = transforms.ToTensor()(image)
 
         if self.normalize:
             image = self.norm(image)
