@@ -10,10 +10,10 @@ import click
 @click.option("--base_dir", default="submission", help="Directory with predicted masks")
 def main(base_dir):
     base_path = "data/ethz-cil-road-segmentation-2023"
-    image_path = os.path.join(base_path, "training/images")
+    #image_path = os.path.join(base_path, "training/images")
     mask_path = os.path.join(base_path, "training/groundtruth")
-    dataset = ETHDataset(image_path, mask_path, augment_images=False)
-    masks = ETHDataset(image_path, base_dir, augment_images=False)
+    dataset = ETHDataset(mask_path, augment_images=False, submission=True)
+    masks = ETHDataset(base_dir, augment_images=False, submission=True)
     output = torch.cat([mask for _,mask,_ in masks], dim=0)
     target = torch.cat([mask for _,mask,_ in dataset], dim=0) 
     tp, fp, fn, tn = smp.metrics.get_stats(output, target, mode='binary', threshold=0.5)
