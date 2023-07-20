@@ -38,7 +38,7 @@ if __name__ == "__main__":  # use line-buffering for both stdout and stderr
     )
 
     model = ResidualAttentionDuckUNet(4, 1)
-    model.load_state_dict(torch.load('best_model_weights_pretrained_clDice_duck_final.pth'))
+    #model.load_state_dict(torch.load('best_model_weights_pretrained_clDice_duck_final.pth'))
 
     loss_fn = DiceLovaszBCELoss(alpha=0.5, beta=0.5)
     optimizer = Lion(model.parameters(), lr=1e-5, weight_decay=1e-6)
@@ -47,7 +47,7 @@ if __name__ == "__main__":  # use line-buffering for both stdout and stderr
         dataset,
         None,
         loss_fn,
-        None,
+        optimizer,
         split_test=0.2,
         batch_size=32,
         epochs=10,
