@@ -131,6 +131,7 @@ class GMapsDataset(ETHDataset):
         image = Image.open(
             os.path.join(self.image_path, self.image_list[index])
         ).convert("RGBA")
+        image = transforms.ToTensor()(image)
 
         mask = Image.open(os.path.join(self.mask_path, self.image_list[index]))
         mask = transforms.ToTensor()(mask)
