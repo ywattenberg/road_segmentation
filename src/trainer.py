@@ -1,7 +1,7 @@
 import torch
 import time
 from datetime import datetime
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader, random_split, Subset
 import pandas as pd
 import numpy as np
 
@@ -25,6 +25,7 @@ class Trainer:
         scheduler=None,
         epochs_between_safe=1,
         batches_between_safe=None,
+        split_random=False,
     ):
         if model == None or train_data == None:
             raise Exception("Model and train_data must be specified")
@@ -36,7 +37,13 @@ class Trainer:
                 # warnings.warn("Test data is not specified, will split train data into train and validation")
                 train_len = int(len(train_data) * (1 - split_test))
                 test_len = len(train_data) - train_len
+            if split_random:
                 train_data, test_data = random_split(train_data, (train_len, test_len))
+
+            else:
+                train_data = Subset(train_data, range(train_len))
+                test_data = Subset(train_data, range(train_len, train_len + test_len))
+
 
         if optimizer == None:
             self.optimizer = torch.optim.Adam(
