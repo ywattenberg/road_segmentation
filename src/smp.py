@@ -62,7 +62,15 @@ from trainer import Trainer
     default="/cluster/scratch/siwachte/additional_data",
     type=str,
 )
-def main(model_name, encoder_name, encoder_weights, epochs, batch_size, learning_rate, base_path):
+def main(
+    model_name,
+    encoder_name,
+    encoder_weights,
+    epochs,
+    batch_size,
+    learning_rate,
+    base_path,
+):
     # use line-buffering for both stdout and stderr
     sys.stdout = open(sys.stdout.fileno(), mode="w", buffering=1)
     sys.stderr = open(sys.stderr.fileno(), mode="w", buffering=1)
@@ -89,7 +97,7 @@ def main(model_name, encoder_name, encoder_weights, epochs, batch_size, learning
         dataset,
         None,
         loss_fn,
-        None,
+        optimizer,
         split_test=0.2,
         batch_size=batch_size,
         epochs=epochs,
@@ -100,7 +108,9 @@ def main(model_name, encoder_name, encoder_weights, epochs, batch_size, learning
     )
 
     scores = trainer.train_test()
-    scores.to_csv(f"smp/{model_name}-{encoder_name}-{encoder_weights}-clDice.csv", index=False)
+    scores.to_csv(
+        f"smp/{model_name}-{encoder_name}-{encoder_weights}-clDice.csv", index=False
+    )
 
 
 if __name__ == "__main__":
