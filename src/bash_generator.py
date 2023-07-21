@@ -1,3 +1,6 @@
+import os
+
+import click
 import pandas as pd
 
 
@@ -61,52 +64,88 @@ def create_bash_script(
         f.write(base_1)
 
 
-model_names = [
-    # "Unet",
-    "UnetPlusPlus",
-    # "MAnet",
-    "Linknet",
-    "FPN",
-    # "PSPNet",
-    # "PAN",
-    # "DeepLabV3",
-    "DeepLabV3Plus",
-]
-encoder_names = [
-    "resnet34",
-    "resnet50",
-    "resnet101",
-    # "resnet152",
-    "efficientnet-b5",
-    # "resnext50_32x4d",
-    # "resnext101_32x8d",
-    # "timm-resnest50d",
-    # "timm-resnest101e",
-]
-encoder_weights = ["imagenet"]
+@click.command()
+@click.option(
+    "--clear-folder",
+    "-c",
+    help="Clears the folder of all bash scripts",
+    default=False,
+    type=bool,
+)
+def main(clear_folder):
+    if clear_folder:
+        for file in os.listdir("scripts/auto"):
+            os.remove(os.path.join("scripts/auto", file))
 
-for model_name in model_names:
-    for encoder_name in encoder_names:
-        for encoder_weight in encoder_weights:
-            if (
-                encoder_name == "resnet101"
-                or encoder_name == "efficientnet-b5"
-                or encoder_name == "resnet50"
-            ):
-                create_bash_script(
-                    model_name,
-                    encoder_name,
-                    encoder_weight,
-                    epochs=40,
-                    batch_size=32,
-                    learning_rate=1e-3,
-                )
-            else:
-                create_bash_script(
-                    model_name,
-                    encoder_name,
-                    encoder_weight,
-                    epochs=40,
-                    batch_size=64,
-                    learning_rate=1e-3,
-                )
+    model_names = [
+        # "Unet",
+        "UnetPlusPlus",
+        # "MAnet",
+        "Linknet",
+        # "FPN",
+        # "PSPNet",
+        # "PAN",
+        # "DeepLabV3",
+        "DeepLabV3Plus",
+    ]
+    encoder_names = [
+        # "resnet34",
+        # "resnet50",
+        # "resnet101",
+        # "resnet152",
+        # "efficientnet-b5",
+        # "efficientnet-b6",
+        # "efficientnet-b7",
+        "resnext50_32x4d",
+        "resnext101_32x8d",
+        "timm-resnest50d",
+        "timm-resnest101e",
+    ]
+    encoder_weights = ["imagenet"]
+
+    EPOCHS = 30
+    for model_name in model_names:
+        for encoder_name in encoder_names:
+            for encoder_weight in encoder_weights:
+                if (
+                    encoder_name == "resnet50"
+                    or encoder_name == "resnet101"
+                    or encoder_name == "efficientnet-b5"
+                    or encoder_name == "timm-resnest50d"
+                    or encoder_name == "timm-resnest101e"
+                    or encoder_name == "resnext50_32x4d"
+                    or encoder_name == "resnext101_32x8d"
+                ):
+                    create_bash_script(
+                        model_name,
+                        encoder_name,
+                        encoder_weight,
+                        epochs=EPOCHS,
+                        batch_size=32,
+                        learning_rate=1e-3,
+                    )
+                elif (
+                    encoder_name == "efficientnet-b7"
+                    or encoder_name == "efficientnet-b6"
+                ):
+                    create_bash_script(
+                        model_name,
+                        encoder_name,
+                        encoder_weight,
+                        epochs=EPOCHS,
+                        batch_size=16,
+                        learning_rate=1e-3,
+                    )
+                else:
+                    create_bash_script(
+                        model_name,
+                        encoder_name,
+                        encoder_weight,
+                        epochs=EPOCHS,
+                        batch_size=64,
+                        learning_rate=1e-3,
+                    )
+
+
+if __name__ == "__main__":
+    main()
