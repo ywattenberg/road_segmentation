@@ -126,7 +126,15 @@ def get_and_safe_img_random(i):
 
     rand_x = uniform(box["w"], box["e"])
     rand_y = uniform(box["n"], box["s"])
-    image, mask, new_mask, roadmap = fetch_image(rand_y, rand_x)
+    x_fmt = str(rand_x).replace(".", "_").replace("-", "n")
+    y_fmt = str(rand_y).replace(".", "_").replace("-", "n")
+    while os.path.exists("data/additional_data/images/{}-{}.png".format(x_fmt, y_fmt)):
+        rand_x = uniform(box["w"], box["e"])
+        rand_y = uniform(box["n"], box["s"])
+        x_fmt = str(rand_x).replace(".", "_").replace("-", "n")
+        y_fmt = str(rand_y).replace(".", "_").replace("-", "n")
+
+    image, mask, new_mask, roadmap = fetch_image(rand_x, rand_y)
     image = get_center(image)
     new_mask = get_center(new_mask)
     save_image(image, new_mask, rand_x, rand_y)
@@ -185,4 +193,5 @@ def grid_download(threads=10, step_size=1e-4):
 
 
 if __name__ == "__main__":
-    grid_download(threads=10, step_size=1e-4)
+    # grid_download(threads=10, step_size=1e-4)
+    download_random()
