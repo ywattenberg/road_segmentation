@@ -18,7 +18,7 @@ import numpy as np
 from torch import nn
 import random
 from Model.layers import Duck_block
-
+from segmentation_models_pytorch.encoders import get_encoder
 random.seed(0)
 np.random.seed(0)
 torch.manual_seed(0)
@@ -339,7 +339,73 @@ class ResidualAttentionDuckUNet(nn.Module):
     upscale256, sa256up = self.upsample5(upscale128)
     finaloutput = self.classification(upscale256)
     return finaloutput
-  
+
+
+class ResidualAttentionDuckNetwithEncoder(nn.Module):
+  def __init__(self, inputChannel, outputChannel):
+    super().__init__()
+    self.downsample1 = DownSampleWithAttention(inputChannel, 16)
+    self.downsample2 = DownSampleWithAttention(64, 64)
+    self.downsample3 = DownSampleWithAttention(104, 128)
+    self.downsample4 = DownSampleWithAttention(192, 256)
+    self.downsample5 = DownSampleWithAttention(432, 512)
+
+    self.residualBlock1 = ResidualBlock(512, 512)
+    self.residualBlock2 = ResidualBlock(512, 512)
+    self.residualBlock3 = ResidualBlock(512, 512)
+
+    self.upsample1 = UpSampleWithAttention(512, 256)
+    self.upsample2 = UpSampleWithAttention(512, 128)
+    self.upsample3 = UpSampleWithAttention(256, 64)
+    self.upsample4 = UpSampleWithAttention(128, 32)
+    self.upsample5 = UpSampleWithAttention(64, 32)
+    self.classification = nn.Sequential(
+            nn.Conv2d(32, outputChannel, kernel_size=1),
+        )
+    
+    self.duckCH = Duck_block(1024, 512)
+    self.duck1 = Duck_block(16, 16)
+    self.duck2 = Duck_block(64, 64)
+    self.duck3 = Duck_block(128, 128)
+    self.duck4 = Duck_block(256, 256)
+    self.duck5 = Duck_block(512, 512)
+    
+    self.encoder = get_encoder("efficientnet-b5", weights="imagenet", in_channels=3)
+
+  def forward(self, x):
+    encoded = self.encoder(x)
+    scale128, sa128down = self.downsample1(encoded[0])
+    print("scale128:", scale128.shape)
+    d_scale128 = self.duck1(scale128)
+    scale64, sa64down = self.downsample2(torch.cat([encoded[1], scale128 + d_scale128], dim=1))
+    print("scale64:", scale64.shape)
+    d_scale64 = self.duck2(scale64)
+    scale32, sa32down = self.downsample3(torch.cat([encoded[2], scale64 + d_scale64], dim=1))
+    print("scale32:", scale32.shape)
+    d_scale32 = self.duck3(scale32)
+    scale16, sa64down = self.downsample4(torch.cat([encoded[3], scale32 + d_scale32], dim=1))
+    d_scale16 = self.duck4(scale16)
+    scale8, sa8down = self.downsample5(torch.cat([encoded[4], scale16 + d_scale16], dim=1))
+    d_scale8 = self.duck5(scale8)
+    scale8_cat = torch.cat([encoded[5], scale8 + d_scale8], dim=1)
+    scale8_cat = self.duckCH(scale8_cat)
+    scale8, sa8down = self.residualBlock1(scale8_cat)
+    scale8, sa8down = self.residualBlock2(scale8)
+
+    scale8, sa8down = self.residualBlock3(scale8)
+    upscale16, sa16up = self.upsample1(scale8)
+    upscale16 = torch.cat([upscale16, d_scale16], dim=1)
+    upscale32, sa32up = self.upsample2(upscale16)
+    upscale32 = torch.cat([upscale32, d_scale32], dim=1)
+    upscale64, sa64up = self.upsample3(upscale32)
+    upscale64 = torch.cat([upscale64, d_scale64], dim=1)
+    upscale128, sa128up = self.upsample4(upscale64)
+    upscale128 = torch.cat([upscale128, d_scale128], dim=1)
+    upscale256, sa256up = self.upsample5(upscale128)
+    finaloutput = self.classification(upscale256)
+    return finaloutput
+   
+
 # Shapes:
 # scale128: torch.Size([1, 32, 256, 256])
 # scale64: torch.Size([1, 64, 128, 128])
