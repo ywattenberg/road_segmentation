@@ -2,6 +2,8 @@ import requests
 import os
 import io
 import numpy as np
+import time
+import tqdm
 
 from random import uniform
 from skimage.color import rgb2gray
@@ -9,7 +11,6 @@ from skimage.io import imsave
 from multiprocessing import Pool
 from PIL import Image
 from PIL import ImageOps
-from tqdm import tqdm
 
 los_angeles = [
     {"n": 34.269260, "w": -118.604202, "s": 34.171040, "e": -118.370722},
@@ -53,7 +54,9 @@ cities_names = [
     "boston",
 ]
 
-
+IMAGES = 5000
+pbar = tqdm.tqdm(total=IMAGES)
+    
 def fetch_image(x, y, zoom_=18, width_=600, height_=600):
     url = "https://maps.googleapis.com/maps/api/staticmap?"
     center = "center=" + str(x) + "," + str(y)
@@ -62,7 +65,9 @@ def fetch_image(x, y, zoom_=18, width_=600, height_=600):
     sat_maptype = "&maptype=satellite"
     road_maptype = "&maptype=roadmap"
     no_banners = "&style=feature:all|element:labels|visibility:off"
-    api_key = "&key=" + "AIzaSyClkpTDJuocNePzROobsV6cAP_6NfzdwaA"
+    # api_key = "&key=" + "AIzaSyClkpTDJuocNePzROobsV6cAP_6NfzdwaA"
+    # api_key = "&key=" + "AIzaSyBuaGWpuAPeNiFZEO-29Rxo0948XEY8A9Y"
+    api_key = "&key=" + "AIzaSyDhB2YHQzo6TYIe_B6mqoMuzGXTDEVKsR8"
 
     sat_url = url + center + zoom + size + sat_maptype + no_banners + api_key
     road_url = (
@@ -113,8 +118,8 @@ def get_center(image):
 def save_image(image, mask, x_fmt, y_fmt):
     img_path = "data/additional_data/images/{}-{}.png".format(x_fmt, y_fmt)
     mask_path = "data/additional_data/masks/{}-{}.png".format(x_fmt, y_fmt)
-    imsave(img_path, image)
-    imsave(mask_path, (mask * 255).astype(np.uint8))
+    imsave(img_path, image, check_contrast=False)
+    imsave(mask_path, (mask * 255).astype(np.uint8), check_contrast=False)
     # print("saved image at path: {}".format(img_path))
     # print("saved mask at path: {}".format(mask_path))
 
@@ -124,16 +129,26 @@ def get_and_safe_img_random(i):
     index = np.random.randint(len(cities_boxes[city_nr]))
     box = cities_boxes[city_nr][index]
 
-    rand_x = uniform(box["w"], box["e"])
-    rand_y = uniform(box["n"], box["s"])
-    image, mask, new_mask, roadmap = fetch_image(rand_y, rand_x)
+    rand_x = uniform(box["n"], box["s"])
+    rand_y = uniform(box["w"], box["e"])
+    x_fmt = str(rand_x).replace(".", "_").replace("-", "n")
+    y_fmt = str(rand_y).replace(".", "_").replace("-", "n")
+    while os.path.exists("data/additional_data/images/{}-{}.png".format(x_fmt, y_fmt)):
+        rand_x = uniform(box["n"], box["s"])
+        rand_y = uniform(box["w"], box["e"])
+        x_fmt = str(rand_x).replace(".", "_").replace("-", "n")
+        y_fmt = str(rand_y).replace(".", "_").replace("-", "n")
+
+    image, mask, new_mask, roadmap = fetch_image(rand_x, rand_y)
     image = get_center(image)
     new_mask = get_center(new_mask)
-    save_image(image, new_mask, rand_x, rand_y)
+    save_image(image, new_mask, x_fmt, y_fmt)
+    pbar.update(1)
+    # time.sleep(1)
 
 
 def download_random():
-    with Pool(10) as pool:
+    with Pool(4) as pool:
         pool.map(get_and_safe_img_random, range(5000, 10000))
 
 
@@ -183,6 +198,18 @@ def grid_download(threads=10, step_size=1e-4):
             with Pool(threads) as pool:
                 pool.starmap(get_and_safe_img, function_args)
 
-
+def delete_wrong():
+    ctr = 0
+    for file in sorted(os.listdir("data/additional_data/images/")):
+        file_stats = os.stat(f"data/additional_data/images/{file}")
+        if (file_stats.st_size < 14 * (2**10)):
+            ctr += 1
+            os.remove(f"data/additional_data/images/{file}")
+            os.remove(f"data/additional_data/masks/{file}")
+    print(ctr)
+        
 if __name__ == "__main__":
-    grid_download(threads=10, step_size=1e-4)
+    # grid_download(threads=10, step_size=1e-4)
+    for i in range(4):
+        download_random()
+    # delete_wrong()

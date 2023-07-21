@@ -12,10 +12,10 @@ def main(base_dir):
     base_path = "data/ethz-cil-road-segmentation-2023"
     #image_path = os.path.join(base_path, "training/images")
     mask_path = os.path.join(base_path, "training/groundtruth")
-    dataset = ETHDataset(mask_path, augment_images=False, submission=True)
-    masks = ETHDataset(base_dir, augment_images=False, submission=True)
-    output = torch.cat([mask for _,mask,_ in masks], dim=0)
-    target = torch.cat([mask for _,mask,_ in dataset], dim=0) 
+    dataset = ETHDataset(mask_path, None, augment_images=False, submission=True)
+    masks = ETHDataset(base_dir, None, augment_images=False, submission=True)
+    output = torch.cat([mask for mask in masks], dim=0)
+    target = torch.cat([mask for mask in dataset], dim=0).round().long()
     tp, fp, fn, tn = smp.metrics.get_stats(output, target, mode='binary', threshold=0.5)
 
     # then compute metrics with required reduction (see metric docs)
@@ -24,6 +24,11 @@ def main(base_dir):
     f2_score = smp.metrics.fbeta_score(tp, fp, fn, tn, beta=2, reduction="micro")
     accuracy = smp.metrics.accuracy(tp, fp, fn, tn, reduction="macro")
     recall = smp.metrics.recall(tp, fp, fn, tn, reduction="micro-imagewise")
+    print(f"iou_score: {iou_score}")
+    print(f"f1_score: {f1_score}")
+    print(f"f2_score: {f2_score}")
+    print(f"accuracy: {accuracy}")
+    print(f"recall: {recall}")
     
 
 if __name__ == "__main__":  # use line-buffering for both stdout and stderr
