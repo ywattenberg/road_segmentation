@@ -87,7 +87,7 @@ def main(
         encoder_name=encoder_name,
         encoder_weights=encoder_weights,
         # activation="sigmoid",
-        in_channels=4,
+        in_channels=3,
         classes=1,
     )
     loss_fn = SoftDiceClDice(0.5)
