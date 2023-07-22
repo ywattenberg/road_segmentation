@@ -70,6 +70,7 @@ def create_bash_script(
     "-c",
     help="Clears the folder of all bash scripts",
     default=False,
+    is_flag=True,
     type=bool,
 )
 def main(clear_folder):
@@ -93,17 +94,17 @@ def main(clear_folder):
         # "resnet50",
         # "resnet101",
         # "resnet152",
-        # "efficientnet-b5",
-        # "efficientnet-b6",
-        # "efficientnet-b7",
-        "resnext50_32x4d",
-        "resnext101_32x8d",
-        "timm-resnest50d",
-        "timm-resnest101e",
+        "efficientnet-b5",
+        "efficientnet-b6",
+        "efficientnet-b7",
+        # "resnext50_32x4d",
+        # "resnext101_32x8d",
+        # "timm-resnest50d",
+        # "timm-resnest101e",
     ]
     encoder_weights = ["imagenet"]
 
-    EPOCHS = 30
+    EPOCHS = 80
     for model_name in model_names:
         for encoder_name in encoder_names:
             for encoder_weight in encoder_weights:
