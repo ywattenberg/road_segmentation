@@ -47,9 +47,10 @@ class BaseDataset(Dataset):
     def augment_image(self, *args):
         aug = self.augment(torch.cat(args))
         if len(args) == 3:
-            return self.color_augment(aug[0:3, :, :]), aug[3, :, :], aug[4, :, :]
+            print(f"Augmenting {args[0].shape} to {aug.shape}")
+            return aug[0:3, :, :], aug[3, :, :], aug[4, :, :]
         else:
-            return self.color_augment(aug[0:3, :, :]), aug[3, :, :]
+            return aug[0:3, :, :], aug[3, :, :]
 
     def resize(self, *args):
         return [self.pad(arg) for arg in args]
@@ -137,7 +138,7 @@ class GMapsDataset(ETHDataset):
         # Image should be in RGBA format
         image = Image.open(
             os.path.join(self.image_path, self.image_list[index])
-        ).convert("RGBA")
+        ).convert("RGB")
         image = transforms.ToTensor()(image)
 
         mask = Image.open(os.path.join(self.mask_path, self.image_list[index]))
