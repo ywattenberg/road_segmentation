@@ -21,7 +21,8 @@ echo "In directory:    $(pwd)"
 echo "Starting on:     $(date)"
 echo "SLURM_JOB_ID:    ${SLURM_JOB_ID}"
 
-rsync -ah --stats /cluster/scratch/$USER/additional_data $TMPDIR
+rsync -ah --stats /cluster/scratch/$USER/wachterberg-street65.tar.gz $TMPDIR
+tar -xzf wachterberg-street65.tar.gz
 
 echo "Data copied at:     $(date)"
 
