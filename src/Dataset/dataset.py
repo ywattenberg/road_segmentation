@@ -24,13 +24,15 @@ class BaseDataset(Dataset):
         )
         self.color_augment = transforms.Compose(
             [
-                transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.2),
+                transforms.ColorJitter(
+                    brightness=0.2, contrast=0.2, saturation=0.2, hue=0.2
+                ),
                 transforms.RandomGrayscale(p=0.2),
             ]
         )
         self.norm = transforms.Normalize(
-                mean=[0.48, 0.478, 0.449, 0.5], std=[0.211, 0.196, 0.200, 0.5])
-
+            mean=[0.48, 0.478, 0.449, 0.5], std=[0.211, 0.196, 0.200, 0.5]
+        )
 
         self.pad = transforms.Pad(56, fill=(0))
         # self.color_augment = transforms.v2.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.2)
@@ -45,9 +47,9 @@ class BaseDataset(Dataset):
     def augment_image(self, *args):
         aug = self.augment(torch.cat(args))
         if len(args) == 3:
-            return self.color_augment(aug[0:4, :, :]), aug[4, :, :], aug[5, :, :]
+            return self.color_augment(aug[0:3, :, :]), aug[3, :, :], aug[4, :, :]
         else:
-            return self.color_augment(aug[0:4, :, :]), aug[4, :, :]
+            return self.color_augment(aug[0:3, :, :]), aug[3, :, :]
 
     def resize(self, *args):
         return [self.pad(arg) for arg in args]
@@ -89,9 +91,15 @@ class ETHDataset(BaseDataset):
             skeleton = Image.open(os.path.join(self.skel_path, self.image_list[index]))
             skeleton = transforms.ToTensor()(skeleton)
 
-            augmented_stack = self.augment_image(image, mask, skeleton) if self.augment else [image, mask, skeleton]
+            augmented_stack = (
+                self.augment_image(image, mask, skeleton)
+                if self.augment
+                else [image, mask, skeleton]
+            )
         else:
-            augmented_stack = self.augment_image(image, mask) if self.augment else [image, mask]
+            augmented_stack = (
+                self.augment_image(image, mask) if self.augment else [image, mask]
+            )
         return self.resize(*augmented_stack)
 
 
@@ -106,9 +114,8 @@ class MassachusettsDataset(BaseDataset):
         self.length = len(self.image_list)
 
     def __getitem__(self, index):
-        image = Image.open(
-            os.path.join(self.image_path, self.image_list[index])
-        ).convert("RGBA")
+        image = Image.open(os.path.join(self.image_path, self.image_list[index]))
+        # .convert("RGBA")
         mask = Image.open(os.path.join(self.mask_path, self.image_list[index])[:-1])
         image = transforms.ToTensor()(image)
         mask = transforms.ToTensor()(mask)
@@ -139,8 +146,14 @@ class GMapsDataset(ETHDataset):
             skeleton = Image.open(os.path.join(self.skel_path, self.image_list[index]))
             skeleton = transforms.ToTensor()(skeleton)
 
-            augmented_stack = self.augment_image(image, mask, skeleton) if self.augment else [image, mask, skeleton]
+            augmented_stack = (
+                self.augment_image(image, mask, skeleton)
+                if self.augment
+                else [image, mask, skeleton]
+            )
         else:
-            augmented_stack = self.augment_image(image, mask) if self.augment else [image, mask]
+            augmented_stack = (
+                self.augment_image(image, mask) if self.augment else [image, mask]
+            )
         return self.resize(*augmented_stack)
         # return image, mask, skeleton
