@@ -47,7 +47,6 @@ class BaseDataset(Dataset):
     def augment_image(self, *args):
         aug = self.augment(torch.cat(args))
         if len(args) == 3:
-            print(f"Augmenting {args[0].shape} to {aug.shape}")
             return aug[0:3, :, :], aug[3, :, :], aug[4, :, :]
         else:
             return aug[0:3, :, :], aug[3, :, :]
