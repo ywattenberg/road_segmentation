@@ -181,7 +181,7 @@ class Trainer:
                             self.model.state_dict(),
                             f"models/best_model_weights_{self.name}.pth",
                         )
-                    if t + 1 % 5 == 0:
+                    if ((t + 1) % 5) == 0:
                         print("Saving model")
                         torch.save(
                             self.model.state_dict(),
