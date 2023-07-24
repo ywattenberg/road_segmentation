@@ -1,9 +1,9 @@
-torch
-torchvision
+torch~=2.0
+torchvision~=0.15.2
 numpy
 pandas
 opencv-python
 matplotlib
-segmentation-models-pytorch
+segmentation-models-pytorch==0.3.3
 absl-py
-lion-pytorch
+lion-pytorch==0.1.2
