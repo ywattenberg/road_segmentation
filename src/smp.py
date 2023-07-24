@@ -2,7 +2,6 @@ import sys
 import os
 import click
 
-
 import segmentation_models_pytorch as smp
 from segmentation_models_pytorch.losses import DiceLoss, JaccardLoss
 from lion_pytorch import Lion
@@ -24,7 +23,7 @@ from trainer import Trainer
     "--encoder-name",
     "-en",
     help="Which encoder to use",
-    default="resnet34",
+    default="efficientnet-b5",
     type=str,
 )
 @click.option(
@@ -52,7 +51,7 @@ from trainer import Trainer
     "--learning-rate",
     "-lr",
     help="Learning rate",
-    default=1e-3,
+    default=1e-4,
     type=float,
 )
 @click.option(
@@ -91,7 +90,7 @@ def main(
         classes=1,
     )
     loss_fn = SoftDiceClDice(0.5)
-    optimizer = Lion(model.parameters(), lr=learning_rate, weight_decay=1e-3)
+    optimizer = Lion(model.parameters(), lr=learning_rate, weight_decay=1e-2)
     trainer = Trainer(
         model,
         dataset,
