@@ -104,7 +104,7 @@ def main(clear_folder):
     ]
     encoder_weights = ["imagenet"]
 
-    EPOCHS = 80
+    EPOCHS = 30
     for model_name in model_names:
         for encoder_name in encoder_names:
             for encoder_weight in encoder_weights:
@@ -123,7 +123,7 @@ def main(clear_folder):
                         encoder_weight,
                         epochs=EPOCHS,
                         batch_size=32,
-                        learning_rate=1e-3,
+                        learning_rate=1e-4,
                     )
                 elif (
                     encoder_name == "efficientnet-b7"
@@ -135,7 +135,7 @@ def main(clear_folder):
                         encoder_weight,
                         epochs=EPOCHS,
                         batch_size=16,
-                        learning_rate=1e-3,
+                        learning_rate=5e-5,
                     )
                 else:
                     create_bash_script(
