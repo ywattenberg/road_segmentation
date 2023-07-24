@@ -12,12 +12,35 @@ import subprocess
 import sys
 
 MODEL_PATHS = [
-    "model_weights_UnetPlusPlus-resnet34-imagenet-clDice.pth",
-    "model_weights_UnetPlusPlus-resnet34-imagenet-clDice.pth",
-    "model_weights_Linknet-resnet34-imagenet-clDice.pth",
-    "model_weights_Linknet-resnet50-imagenet-clDice.pth",
+    'model_weights_DeepLabV3Plus-efficientnet-b5-imagenet-clDice.pth',
+    'model_weights_DeepLabV3Plus-efficientnet-b7-imagenet-clDice.pth',
+    'model_weights_DeepLabV3Plus-resnet34-imagenet-clDice.pth',
+    'model_weights_FPN-resnet34-imagenet-clDice.pth',
+    'model_weights_FPN-resnet50-imagenet-clDice.pth',
+    'model_weights_Linknet-efficientnet-b5-imagenet-clDice.pth',
+    'model_weights_Linknet-resnet34-imagenet-clDice.pth',
+    'model_weights_Linknet-resnet50-imagenet-clDice.pth',
+    'model_weights_UnetPlusPlus-efficientnet-b5-imagenet-clDice.pth',
+    'model_weights_UnetPlusPlus-efficientnet-b7-imagenet-clDice.pth',
+    'model_weights_UnetPlusPlus-resnet101-imagenet-clDice.pth',
+    'model_weights_UnetPlusPlus-resnet34-imagenet-clDice.pth',
+    'model_weights_UnetPlusPlus-resnet50-imagenet-clDice.pth'
 ]
-TEST_SCORES = [0.1911, 0.183857, 0.188096, 0.189461]
+MODEL_PATHS= ["best_model_weights_UnetPlusPlus-efficientnet-b5-imagenet-clDice.pth"]
+TEST_SCORES = [0.174434,
+    0.1706,
+    0.184872,
+    0.191541,
+    0.186897,
+    0.178627,
+    0.188096,
+    0.189461,
+    0.164649,
+    0.169151,
+    0.183924,
+    0.1911,
+    0.183857]
+TEST_SCORES= [0.1]
 
 
 def get_model(model_name, encoder_name, model_path, device=None):
@@ -54,8 +77,8 @@ def get_masks(model, dataset, batch_size, device=None):
 
 def calc_weights_from_scores(scores):
     scores = np.array(scores)
+    weights = np.ones_like(scores) - scores
     weights = scores / scores.sum()
-    weights = np.ones(weights.shape) - weights
     return weights
 
 
@@ -84,7 +107,8 @@ def main(model_dir, weighted, device, batch_size, output, threshold, train):
     dataset = ETHDataset(
         image_path, None, augment_images=False, normalize=False, submission=True
     )
-
+    print(MODEL_PATHS)
+    print(TEST_SCORES)
     model_dir = "models"
     if weighted:
         weights = calc_weights_from_scores(TEST_SCORES)
@@ -94,7 +118,9 @@ def main(model_dir, weighted, device, batch_size, output, threshold, train):
     masks = []
     for path, weight in zip(MODEL_PATHS, weights):
         model = path.split("_")[-1]
-        model, encoder = model.split("-")[0:2]
+        tmp = model.split("-")
+        model = tmp[0]
+        encoder = '-'.join(tmp[1:-2])
         print(f"Using model {model} with encoder {encoder} and weight {weight}")
         model = get_model(model, encoder, os.path.join(model_dir, path), device=device)
         masks.append(get_masks(model, dataset, batch_size=batch_size, device=device))
@@ -103,7 +129,8 @@ def main(model_dir, weighted, device, batch_size, output, threshold, train):
     masks = [mask * weight for mask, weight in zip(masks, weights)]
     masks = np.array(masks).sum(axis=0)
     masks = ((masks > threshold) * 255).astype(np.uint8)
-
+    
+    save_path = "submission" if not train else "test_eval"
     for mask, name in zip(masks, os.listdir(image_path)):
         mask = Image.fromarray(mask.squeeze())
         mask.save(os.path.join("submission", name))

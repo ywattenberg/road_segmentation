@@ -106,9 +106,9 @@ class Trainer:
         time_at_start = time.time() * 1000
         self.model.train()
         running_loss = np.array([])
-        for batch, (*input, y, skel) in enumerate(self.train_dataloader):
+        for batch, (input, y) in enumerate(self.train_dataloader):
             self.optimizer.zero_grad()
-            pred = self.model(input[0].to(self.device))
+            pred = self.model(input.to(self.device))
             y = y.to(self.device).unsqueeze(1)
             loss = self.loss_fn(pred, y)  # skel.to(self.device).unsqueeze(1))
             loss.backward()
@@ -139,8 +139,8 @@ class Trainer:
         test_loss = [0 for _ in self.test_metrics]
         self.model.eval()
         with torch.no_grad():
-            for batch, (*input, y, skel) in enumerate(self.test_dataloader):
-                pred = self.model(*[i.to(self.device) for i in input])
+            for batch, (input, y) in enumerate(self.test_dataloader):
+                pred = self.model(input.to(self.device))
                 y = y.to(self.device).unsqueeze(1)
                 for i, metric in enumerate(self.test_metrics):
                     loss = metric(pred, y)

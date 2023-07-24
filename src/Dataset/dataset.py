@@ -31,8 +31,8 @@ class BaseDataset(Dataset):
             ]
         )
         self.norm = transforms.Normalize(
-            mean=[0.48, 0.478, 0.449, 0.5], std=[0.211, 0.196, 0.200, 0.5]
-        )
+                mean=[0.48, 0.478, 0.449], std=[0.211, 0.196, 0.200])
+
 
         self.pad = transforms.Pad(56, fill=(0))
         # self.color_augment = transforms.v2.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.2)
@@ -47,9 +47,9 @@ class BaseDataset(Dataset):
     def augment_image(self, *args):
         aug = self.augment(torch.cat(args))
         if len(args) == 3:
-            return self.color_augment(aug[0:3, :, :]), aug[3, :, :], aug[4, :, :]
+            return aug[0:3, :, :], aug[3, :, :], aug[4, :, :]
         else:
-            return self.color_augment(aug[0:3, :, :]), aug[3, :, :]
+            return aug[0:3, :, :], aug[3, :, :]
 
     def resize(self, *args):
         return [self.pad(arg) for arg in args]
@@ -114,14 +114,15 @@ class MassachusettsDataset(BaseDataset):
         self.length = len(self.image_list)
 
     def __getitem__(self, index):
-        image = Image.open(os.path.join(self.image_path, self.image_list[index]))
-        # .convert("RGBA")
+        image = Image.open(
+            os.path.join(self.image_path, self.image_list[index])
+        )
         mask = Image.open(os.path.join(self.mask_path, self.image_list[index])[:-1])
         image = transforms.ToTensor()(image)
         mask = transforms.ToTensor()(mask)
         resized = transforms.RandomCrop(400, 0)(torch.cat([image, mask]))
-        image = resized[0:4, :, :]
-        mask = resized[4, :, :]
+        image = resized[0:3, :, :]
+        mask = resized[3, :, :]
 
         if self.augment_images:
             augmented_stack = self.augment_image(image, mask.unsqueeze(0))
@@ -137,7 +138,7 @@ class GMapsDataset(ETHDataset):
         # Image should be in RGBA format
         image = Image.open(
             os.path.join(self.image_path, self.image_list[index])
-        ).convert("RGBA")
+        )
         image = transforms.ToTensor()(image)
 
         mask = Image.open(os.path.join(self.mask_path, self.image_list[index]))
