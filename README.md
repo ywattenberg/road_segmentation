@@ -49,8 +49,10 @@ For the ground truth, we also used Google Maps.
 As Google Maps is proprietary, we cannot share the dataset. However, we provide the code to create your own dataset from Google Maps in the `data` folder.
 We can be reached at per [Mail](ywattenberg@ethz.ch) for further questions.
 ## Training
-For training, our model one can use the `main.py` file in the `src` folder. The file contains all the necessary parameters to train the model. The model is trained on a single A100 GPU with 80GB of Memory.
+For training, our model one can use the `main.py` file in the `src` folder. The file contains all the necessary parameters to train the model.
 
-The SMP models can be trained using the `smp.py` file in the `src` folder. With the options `--model` one can specify a non-default decoder. The same can be done for the encoder with `--encoder`. For further options see the file. The model is trained on a single A100 GPU with 80GB of Memory. 
+The SMP models can be trained using the `smp.py` file in the `src` folder. With the options `--model` one can specify a non-default decoder. The same can be done for the encoder with `--encoder`. For further options see the file. 
+
+We trained all our models on a single Nvidia A100 GPU (80GB) for around 20 Epochs.
 ## Results
 
