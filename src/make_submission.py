@@ -9,6 +9,7 @@ from Dataset.dataset import ETHDataset
 from PIL import Image
 from Model.model import ResidualAttentionUNet, ResidualAttentionDuckUNet
 from torchvision.utils import save_image
+import ttach as tta
 
 
 @click.command()
@@ -23,7 +24,7 @@ from torchvision.utils import save_image
     "--encoder-name",
     "-en",
     help="Which encoder to use",
-    default="resnet34",
+    default="efficientnet-b5",
     type=str,
 )
 @click.option(
@@ -40,7 +41,15 @@ from torchvision.utils import save_image
     default="clDice",
     type=str,
 )
-def main(model_name, encoder_name, encoder_weights, loss):
+@click.option(
+    "--test-time-aug",
+    "-tta",
+    help="Whether to use test time augmentation",
+    is_flag=True,
+    default=False,
+    type=bool,
+)
+def main(model_name, encoder_name, encoder_weights, loss, test_time_aug):
     base_path = "data/ethz-cil-road-segmentation-2023"
     image_path = os.path.join(base_path, "test/images")
     pad = transforms.Compose([transforms.Pad(56, fill=(0)), transforms.ToTensor()])
@@ -54,19 +63,27 @@ def main(model_name, encoder_name, encoder_weights, loss):
             encoder_name=encoder_name,
             encoder_weights=encoder_weights,
             # activation="sigmoid",
-            in_channels=4,
+            in_channels=3,
             classes=1,
         )
+
     model.load_state_dict(
         torch.load(
-            f"models/model_weights_{model_name}-{encoder_name}-{encoder_weights}-{loss}.pth",
-            map_location=torch.device("cpu"),
+            f"models/best_model_weights_{model_name}-{encoder_name}-{encoder_weights}-finetuned.pth",
+            # map_location=torch.device("mps"),
         )
     )
+
+    if test_time_aug:
+        model = tta.SegmentationTTAWrapper(
+            model, tta.aliases.d4_transform(), merge_mode="mean"
+        )
+
     model.eval()
     for file in os.listdir(image_path):
         print(file)
         image = Image.open(os.path.join(image_path, file))
+        image = image.convert("RGB")
         image = pad(image)
         mask = model(image.unsqueeze(0))
         mask = transforms.CenterCrop(400)(mask)
