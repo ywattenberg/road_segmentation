@@ -2,8 +2,8 @@
 #SBATCH --mail-type=ALL
 #SBATCH --job-name=rs-UnetPlusPlus
 #SBATCH --time=01:00:00
-#SBATCH --output=/cluster/home/%u/road_segmentation/log/UnetPlusPlus-efficientnet-b5-imagenet-%j.out
-#SBATCH --error=/cluster/home/%u/road_segmentation/log/UnetPlusPlus-efficientnet-b5-imagenet-%j.err
+#SBATCH --output=/cluster/home/%u/road_segmentation/log/submission-%j.out
+#SBATCH --error=/cluster/home/%u/road_segmentation/log/submission-%j.err
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=a100_80gb:1
 #SBATCH --mem-per-cpu=8G
@@ -33,7 +33,7 @@ echo "SLURM_JOB_ID:    ${SLURM_JOB_ID}"
 # rsync -ah --stats /cluster/scratch/$USER/wachterberg-street65.tar.gz $TMPDIR
 # tar -xzf wachterberg-street65.tar.gz
 
-echo "Data copied at:     $(date)"
+# echo "Data copied at:     $(date)"
 
 # Binary or script to execute
 # load modules
@@ -46,29 +46,24 @@ model_name=UnetPlusPlus
 encoder_name=efficientnet-b5
 encoder_weight=imagenet
 run_name="rs-UnetPlusPlus-efficientnet-b5-imagenet"
-epochs=30
-batch_size=32
-learning_rate=0.0001
+
 echo "Run name: ${run_name}"
 echo "Model name: ${model_name}"
 echo "Encoder name: ${encoder_name}"
 echo "Encoder weight: ${encoder_weight}"
-echo "Epochs: ${epochs}"
-echo "Batch size: ${batch_size}"
-echo "Learning rate: ${learning_rate}"
 
-echo "Starting training at:     $(date)"
+echo "Starting to create submission at:     $(date)"
 
-bash $HOME/discord-webhook/discord.sh --webhook-url=https://discord.com/api/webhooks/1105789194959339611/-tDqh7eGfQJhaLoxjCsHbHrwTzhNEsR5SDxabXFiYdhg-KHwzN3kVwr87rxUggqWCQ0K --title "Starting training for $USER" --color 3066993 --field "Date;$(date);false" --field "Jobid;${SLURM_JOB_ID};false" --field "Model;${model_name};false" --field "Encoder;${encoder_name};false" --field "Encoder weight;${encoder_weight};false"
+bash $HOME/discord-webhook/discord.sh --webhook-url=https://discord.com/api/webhooks/1105789194959339611/-tDqh7eGfQJhaLoxjCsHbHrwTzhNEsR5SDxabXFiYdhg-KHwzN3kVwr87rxUggqWCQ0K --title "Starting submission for $USER" --color 3066993 --field "Date;$(date);false" --field "Jobid;${SLURM_JOB_ID};false" --field "Model;${model_name};false" --field "Encoder;${encoder_name};false" --field "Encoder weight;${encoder_weight};false"
 
-$HOME/road_segmentation/venv/bin/python3 $HOME/road_segmentation/src/make_submission.py -m $model_name -en $encoder_name -ew $encoder_weight
+$HOME/road_segmentation/venv/bin/python3 $HOME/road_segmentation/src/make_submission.py -m $model_name -en $encoder_name -ew $encoder_weight -tta
 $HOME/road_segmentation/venv/bin/python3 $HOME/road_segmentation/src/mask_to_submission.py
 
 
-echo "Finished training at:     $(date)"
+echo "Finished submission at:     $(date)"
 
 # discord notification on finish
-bash $HOME/discord-webhook/discord.sh --webhook-url=https://discord.com/api/webhooks/1105789194959339611/-tDqh7eGfQJhaLoxjCsHbHrwTzhNEsR5SDxabXFiYdhg-KHwzN3kVwr87rxUggqWCQ0K --title "Finished training for $USER" --color 3066993 --field "Date;$(date);false" --field "Jobid;${SLURM_JOB_ID};false" --field "Model;${model_name};false" --field "Encoder;${encoder_name};false" --field "Encoder weight;${encoder_weight};false"
+bash $HOME/discord-webhook/discord.sh --webhook-url=https://discord.com/api/webhooks/1105789194959339611/-tDqh7eGfQJhaLoxjCsHbHrwTzhNEsR5SDxabXFiYdhg-KHwzN3kVwr87rxUggqWCQ0K --title "Finished submission for $USER" --color 3066993 --field "Date;$(date);false" --field "Jobid;${SLURM_JOB_ID};false" --field "Model;${model_name};false" --field "Encoder;${encoder_name};false" --field "Encoder weight;${encoder_weight};false"
 
 # End the script with exit code 0
 exit 0
