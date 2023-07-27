@@ -32,7 +32,7 @@ def calc_scores(model, dataloader, device):
         for i, batch in enumerate(dataloader):
             images, labels = batch
             images = images.to(device)
-            labels = labels.to(device)
+            labels = labels.to(device).to(torch.int32)
             outputs = model(images)
             if i == 0:
                 all_outputs = outputs
@@ -40,16 +40,17 @@ def calc_scores(model, dataloader, device):
             else:
                 all_outputs = torch.cat((all_outputs, outputs), dim=0)
                 all_labels = torch.cat((all_labels, labels), dim=0)
-            print (all_outputs.shape)
-            print (all_labels.shape)
-            tp, fp, fn, tn = smp.metrics.get_stats(all_outputs, all_labels, mode='binary', threshold=0.5)
+        all_outputs = all_outputs.squeeze(dim=1)
+        print (all_outputs.shape)
+        print (all_labels.shape)
+        tp, fp, fn, tn = smp.metrics.get_stats(all_outputs, all_labels, mode='binary', threshold=0.5)
 
-            # then compute metrics with required reduction (see metric docs)
-            iou_score = smp.metrics.iou_score(tp, fp, fn, tn, reduction="micro")
-            f1_score = smp.metrics.f1_score(tp, fp, fn, tn, reduction="micro")
-            f2_score = smp.metrics.fbeta_score(tp, fp, fn, tn, beta=2, reduction="micro")
-            accuracy = smp.metrics.accuracy(tp, fp, fn, tn, reduction="macro")
-            recall = smp.metrics.recall(tp, fp, fn, tn, reduction="micro-imagewise")
+        # then compute metrics with required reduction (see metric docs)
+        iou_score = smp.metrics.iou_score(tp, fp, fn, tn, reduction="micro")
+        f1_score = smp.metrics.f1_score(tp, fp, fn, tn, reduction="micro")
+        f2_score = smp.metrics.fbeta_score(tp, fp, fn, tn, beta=2, reduction="micro")
+        accuracy = smp.metrics.accuracy(tp, fp, fn, tn, reduction="macro")
+        recall = smp.metrics.recall(tp, fp, fn, tn, reduction="micro-imagewise")
 
     return [iou_score, f1_score, f2_score, accuracy, recall]
 
@@ -67,7 +68,7 @@ def main(model_path, output_path, is_smp):
     else:
         model = ResidualAttentionDuckNetwithEncoder(3,1)
         model.load_state_dict(torch.load(model_path, map_location=device))
-    
+    model.to(device)
     base_path = "data/ethz-cil-road-segmentation-2023/training"
     dataset = ETHDataset(os.path.join(base_path, "images"), os.path.join(base_path, "groundtruth"), augment_images=False)
     dataloader = DataLoader(dataset, batch_size=1, shuffle=False)
@@ -79,3 +80,6 @@ def main(model_path, output_path, is_smp):
     
     scores.loc[len(scores)] = [model_path] + calc_scores(model, dataloader, device)
     scores.to_csv(output_path, index=False)
+
+if __name__ == "__main__":
+    main()
