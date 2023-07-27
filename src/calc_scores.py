@@ -51,8 +51,10 @@ def calc_scores(model, dataloader, device):
         f2_score = smp.metrics.fbeta_score(tp, fp, fn, tn, beta=2, reduction="micro")
         accuracy = smp.metrics.accuracy(tp, fp, fn, tn, reduction="macro")
         recall = smp.metrics.recall(tp, fp, fn, tn, reduction="micro-imagewise")
+        results = [iou_score, f1_score, f2_score, accuracy, recall]
+        results = [result.cpu().numpy() for result in results]
 
-    return [iou_score, f1_score, f2_score, accuracy, recall]
+    return results
 
 @click.command()
 @click.option('--model_path', default='Model/weights/ResidualAttentionDuckNetwithEncoder.pth', help='Path to model weights')
