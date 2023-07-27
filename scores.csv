@@ -1,0 +1,2 @@
+model,iou_score,f1_score,f2_score,accuracy,recall
+models/best_model_weights_Unet_dice.pth,0.5862686,0.7391795,0.71888137,0.9522198,0.6855821
