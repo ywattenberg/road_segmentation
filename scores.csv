@@ -1,3 +1,4 @@
 model,iou_score,f1_score,f2_score,accuracy,recall
 models/best_model_weights_Unet_dice.pth,0.5862686,0.7391795,0.71888137,0.9522198,0.6855821
 models/best_model_weights_DeepLabV3Plus-efficientnet-b5-imagenet-clDice.pth,0.7054596,0.8272956,0.78855497,0.9694426,0.74705774
+models/best_model_weights_UnetPlusPlus-efficientnet-b5-imagenet-clDice.pth,0.7259481,0.84121656,0.803078,0.97182536,0.7637093
