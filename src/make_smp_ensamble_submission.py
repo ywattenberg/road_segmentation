@@ -43,13 +43,14 @@ TEST_SCORES = [0.174434,
 TEST_SCORES= [0.1]
 
 
-def get_model(model_name, encoder_name, model_path, device=None):
+def get_model(model_name, encoder_name, encoder_weights, model_path, device=None):
     model_func = getattr(smp, model_name)
 
     model = model_func(
         encoder_name=encoder_name,
+        encoder_weights=encoder_weights,
         # activation="sigmoid",
-        in_channels=4,
+        in_channels=3,
         classes=1,
     )
 
@@ -85,14 +86,28 @@ def calc_weights_from_scores(scores):
 @click.command()
 @click.option("--model_dir", default="models", help="Directory with models")
 @click.option("--weighted", "-w", is_flag=True, help="Use weighted average")
-@click.option("--device", "-d", default=None, help="Device to use")
+@click.option("--device", "-d", default="cuda", help="Device to use")
 @click.option("--batch_size", "-b", default=8, help="Batch size")
 @click.option("--output", "-o", default="submission.csv", help="Output file")
 @click.option("--threshold", "-t", default=0.4, help="Threshold for mask")
 @click.option(
     "--train", "-t", is_flag=True, help="Use training set instead of test set"
 )
-def main(model_dir, weighted, device, batch_size, output, threshold, train):
+@click.option(
+    "--test_time_aug", "-tta", is_flag=True, help="Use test time augmentation"
+)
+@click.option("--best-model", "-bm", is_flag=True, help="Use best model")
+def main(
+    model_dir,
+    weighted,
+    device,
+    batch_size,
+    output,
+    threshold,
+    train,
+    test_time_aug,
+    best_model,
+):
     sys.stdout = open(sys.stdout.fileno(), mode="w", buffering=1)
     sys.stderr = open(sys.stderr.fileno(), mode="w", buffering=1)
     if device is None:
@@ -113,7 +128,7 @@ def main(model_dir, weighted, device, batch_size, output, threshold, train):
     if weighted:
         weights = calc_weights_from_scores(TEST_SCORES)
     else:
-        weights = np.ones(len(MODEL_PATHS)) / len(MODEL_PATHS)
+        weights = np.ones(len(MODELS)) / len(MODELS)
 
     masks = []
     for path, weight in zip(MODEL_PATHS, weights):

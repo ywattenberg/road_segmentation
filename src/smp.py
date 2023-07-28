@@ -1,8 +1,7 @@
 import sys
 import os
 import click
-
-
+import torch
 import segmentation_models_pytorch as smp
 from segmentation_models_pytorch.losses import DiceLoss, JaccardLoss
 from lion_pytorch import Lion
@@ -24,7 +23,7 @@ from trainer import Trainer
     "--encoder-name",
     "-en",
     help="Which encoder to use",
-    default="resnet34",
+    default="efficientnet-b5",
     type=str,
 )
 @click.option(
@@ -52,7 +51,7 @@ from trainer import Trainer
     "--learning-rate",
     "-lr",
     help="Learning rate",
-    default=1e-3,
+    default=1e-4,
     type=float,
 )
 @click.option(
@@ -62,6 +61,14 @@ from trainer import Trainer
     default="/cluster/scratch/siwachte/additional_data",
     type=str,
 )
+@click.option(
+    "--load-model",
+    "-lm",
+    help="Load model from file",
+    type=bool,
+    is_flag=True,
+    default=False,
+)
 def main(
     model_name,
     encoder_name,
@@ -70,6 +77,7 @@ def main(
     batch_size,
     learning_rate,
     base_path,
+    load_model,
 ):
     # use line-buffering for both stdout and stderr
     sys.stdout = open(sys.stdout.fileno(), mode="w", buffering=1)
@@ -90,8 +98,20 @@ def main(
         in_channels=3,
         classes=1,
     )
+
+    if load_model:
+        print("Loading model")
+        print(
+            f"models/model_weights_{model_name}-{encoder_name}-{encoder_weights}-clDice.pth"
+        )
+        model.load_state_dict(
+            torch.load(
+                f"models/model_weights_{model_name}-{encoder_name}-{encoder_weights}-clDice.pth"
+            )
+        )
+
     loss_fn = SoftDiceClDice(0.5)
-    optimizer = Lion(model.parameters(), lr=learning_rate, weight_decay=1e-3)
+    optimizer = Lion(model.parameters(), lr=learning_rate, weight_decay=1e-2)
     trainer = Trainer(
         model,
         dataset,

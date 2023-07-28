@@ -78,6 +78,7 @@ class ETHDataset(BaseDataset):
     def __getitem__(self, index):
         # Image should be in RGBA format
         image = Image.open(os.path.join(self.image_path, self.image_list[index]))
+        image = image.convert("RGB")
         image = transforms.ToTensor()(image)
 
         if self.normalize:
