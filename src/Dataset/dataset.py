@@ -94,12 +94,12 @@ class ETHDataset(BaseDataset):
 
             augmented_stack = (
                 self.augment_image(image, mask, skeleton)
-                if self.augment
+                if self.augment_images
                 else [image, mask, skeleton]
             )
         else:
             augmented_stack = (
-                self.augment_image(image, mask) if self.augment else [image, mask]
+                self.augment_image(image, mask) if self.augment_images else [image, mask]
             )
         return self.resize(*augmented_stack)
 
