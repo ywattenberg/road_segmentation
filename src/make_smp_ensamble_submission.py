@@ -11,36 +11,26 @@ import click
 import subprocess
 import sys
 
-MODEL_PATHS = [
-    'model_weights_DeepLabV3Plus-efficientnet-b5-imagenet-clDice.pth',
-    'model_weights_DeepLabV3Plus-efficientnet-b7-imagenet-clDice.pth',
-    'model_weights_DeepLabV3Plus-resnet34-imagenet-clDice.pth',
-    'model_weights_FPN-resnet34-imagenet-clDice.pth',
-    'model_weights_FPN-resnet50-imagenet-clDice.pth',
-    'model_weights_Linknet-efficientnet-b5-imagenet-clDice.pth',
-    'model_weights_Linknet-resnet34-imagenet-clDice.pth',
-    'model_weights_Linknet-resnet50-imagenet-clDice.pth',
-    'model_weights_UnetPlusPlus-efficientnet-b5-imagenet-clDice.pth',
-    'model_weights_UnetPlusPlus-efficientnet-b7-imagenet-clDice.pth',
-    'model_weights_UnetPlusPlus-resnet101-imagenet-clDice.pth',
-    'model_weights_UnetPlusPlus-resnet34-imagenet-clDice.pth',
-    'model_weights_UnetPlusPlus-resnet50-imagenet-clDice.pth'
+import ttach as tta
+
+from Model.model import ResidualAttentionDuckNetwithEncoder
+
+MODELS = [
+    [
+        "UnetPlusPlus",
+        "efficientnet-b5",
+        "imagenet",
+        "clDice",
+    ],
+    [
+        "DeepLabV3Plus",
+        "efficientnet-b5",
+        "imagenet",
+        "finetuned",
+    ],
+    ["our_model_cl_dice_45"],
 ]
-MODEL_PATHS= ["best_model_weights_UnetPlusPlus-efficientnet-b5-imagenet-clDice.pth"]
-TEST_SCORES = [0.174434,
-    0.1706,
-    0.184872,
-    0.191541,
-    0.186897,
-    0.178627,
-    0.188096,
-    0.189461,
-    0.164649,
-    0.169151,
-    0.183924,
-    0.1911,
-    0.183857]
-TEST_SCORES= [0.1]
+TEST_SCORES = [0.1316326082499168, 0.14881372451782227, 0.15]
 
 
 def get_model(model_name, encoder_name, encoder_weights, model_path, device=None):
@@ -122,7 +112,7 @@ def main(
     dataset = ETHDataset(
         image_path, None, augment_images=False, normalize=False, submission=True
     )
-    print(MODEL_PATHS)
+    print(MODELS)
     print(TEST_SCORES)
     model_dir = "models"
     if weighted:
@@ -131,20 +121,51 @@ def main(
         weights = np.ones(len(MODELS)) / len(MODELS)
 
     masks = []
-    for path, weight in zip(MODEL_PATHS, weights):
-        model = path.split("_")[-1]
-        tmp = model.split("-")
-        model = tmp[0]
-        encoder = '-'.join(tmp[1:-2])
-        print(f"Using model {model} with encoder {encoder} and weight {weight}")
-        model = get_model(model, encoder, os.path.join(model_dir, path), device=device)
+    for model_desc, weight in zip(MODELS, weights):
+        if len(model_desc) == 1:
+            if best_model:
+                model_path = os.path.join(
+                    model_dir, f"best_model_weights_{model_desc[0]}.pth"
+                )
+            else:
+                model_path = os.path.join(
+                    model_dir, f"model_weights_{model_desc[0]}.pth"
+                )
+            model = ResidualAttentionDuckNetwithEncoder(3, 1)
+
+            print(f"Using our model")
+            model.load_state_dict(torch.load(model_path, map_location=device))
+        else:
+            model_name, encoder_name, encoder_weights, suffix = model_desc
+            if best_model:
+                model_path = os.path.join(
+                    model_dir,
+                    f"best_model_weights_{model_name}-{encoder_name}-{encoder_weights}-{suffix}.pth",
+                )
+            else:
+                model_path = os.path.join(
+                    model_dir,
+                    f"model_weights_{model_name}-{encoder_name}-{encoder_weights}-{suffix}.pth",
+                )
+
+            print(
+                f"Using model {model_name} with encoder {encoder_name} and weight {encoder_weights}: {model_path}"
+            )
+            model = get_model(
+                model_name, encoder_name, encoder_weights, model_path, device=device
+            )
+
+        if test_time_aug:
+            model = tta.SegmentationTTAWrapper(
+                model, tta.aliases.d4_transform(), merge_mode="mean"
+            )
         masks.append(get_masks(model, dataset, batch_size=batch_size, device=device))
 
     masks = [mask.cpu().numpy() for mask in masks]
     masks = [mask * weight for mask, weight in zip(masks, weights)]
     masks = np.array(masks).sum(axis=0)
     masks = ((masks > threshold) * 255).astype(np.uint8)
-    
+
     save_path = "submission" if not train else "test_eval"
     for mask, name in zip(masks, os.listdir(image_path)):
         mask = Image.fromarray(mask.squeeze())
