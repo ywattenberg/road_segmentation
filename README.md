@@ -39,7 +39,7 @@ The Downsample/Upsample blocks with CBAM use a spatial and channel attention mod
 ![CBAM](./img/Sample_with_CBAM.png)
 (source: Figure 1, Mohammed 2022 [paper](https://arxiv.org/abs/2210.08506))
 
-We further use an EfficientNet-B5 model for feature extraction which are then fed into the UNet like structure at the appropriate levels.
+We further use an EfficientNet-B5 model for feature extraction which is then fed into the UNet-like structure at the appropriate levels.
 
 ## Dataset
 We build our own dataset from satellite images from Google Maps. In total, we pulled 65k aerial images of the
@@ -52,7 +52,7 @@ We provide the dataset [here](https://polybox.ethz.ch/index.php/s/TzqRXKWO1PkWAo
 ## Training
 For training, our model one can use the `main.py` file in the `src` folder. The file contains all the necessary parameters to train the model.
 
-The SMP models can be trained using the `smp.py` file in the `src` folder. With the options `--model` one can specify a non-default decoder. The same can be done for the encoder with `--encoder`. For further options see the file. 
+The SMP models can be trained using the `smp.py` file in the `src` folder. With the option `--model` one can specify a non-default decoder. The same can be done for the encoder with `--encoder`. For further options see the file. 
 
 We trained all our models on a single Nvidia A100 GPU (80GB) for around 20 Epochs.
 ## Results
@@ -65,6 +65,15 @@ We trained all our models on a single Nvidia A100 GPU (80GB) for around 20 Epoch
 | UNet++     | 0.73        | 0.84          | 0.80          | 0.97          | 0.76          |
 
 ## Reproduction for the Competition
-
-
-
+After downloading our dataset and the competition dataset and unpacking both into the data folder. The path to the competition dataset should be something like `data/ethz-cil-road-segmentation-2023/` with the subfolders `training` and `test`.
+Next one can simply run the `train_our_model.py` file to train the RA-DUCKNet model this will take a long time as we trained for multiple days. To train the SMP models first use the `smp.py` file with the following options for the specific options:
+```
+model_name=UnetPlusPlus/DeepLabV3Plus
+encoder_name=efficientnet-b5
+encoder_weight=imagenet
+epochs=30
+batch_size=32
+learning_rate=0.0001
+```
+Choosing either model name. After that, the model can be fine-tuned using the `smp_dice.py` file with the same options setting the `--load-model` option and lowering the lr to 0.00001.
+To finally create a submission one can use `make_smp_ensamble_submission.py -w -b 16 -o "ensemble-tta.csv" -bm -tta`
