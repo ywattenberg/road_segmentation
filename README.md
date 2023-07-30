@@ -6,7 +6,7 @@ a new architecture that combines the main building blocks
 of these two models. We call this model Residual
 Attention DUCKNet (RA-DUCKNet).
 
-Further, we created a new dataset containing some 65’000 satellite images with
+Further, we created a new dataset containing some 90’000 satellite images with
 a ground truth mask from urban areas in the United States. 
 
 ## Contents
@@ -47,7 +47,7 @@ greater area around US cities namely Los Angeles, Boston,
 Houston, Chicago, Phoenix, Philadelphia, and San Francisco
 which have an especially clear street and highway network.
 For the ground truth, we also used Google Maps.
-We provide the dataset [here](link)
+We provide the dataset [here](https://polybox.ethz.ch/index.php/s/TzqRXKWO1PkWAop)
 
 ## Training
 For training, our model one can use the `main.py` file in the `src` folder. The file contains all the necessary parameters to train the model.
