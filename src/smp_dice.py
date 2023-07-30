@@ -110,7 +110,7 @@ def main(
             )
         )
 
-    loss_fn = SoftDiceClDice(0.5)
+    loss_fn = DiceLoss(mode="binary")
     optimizer = Lion(model.parameters(), lr=learning_rate, weight_decay=1e-2)
     trainer = Trainer(
         model,
