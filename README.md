@@ -42,7 +42,7 @@ The Downsample/Upsample blocks with CBAM use a spatial and channel attention mod
 We further use an EfficientNet-B5 model for feature extraction which is then fed into the UNet-like structure at the appropriate levels.
 
 ## Dataset
-We build our own dataset from satellite images from Google Maps. In total, we pulled 65k aerial images of the
+We build our own dataset from satellite images from Google Maps. In total, we pulled 90k aerial images of the
 greater area around US cities namely Los Angeles, Boston,
 Houston, Chicago, Phoenix, Philadelphia, and San Francisco
 which have an especially clear street and highway network.
