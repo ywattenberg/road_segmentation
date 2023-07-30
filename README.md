@@ -65,7 +65,7 @@ We trained all our models on a single Nvidia A100 GPU (80GB) for around 20 Epoch
 | UNet++     | 0.73        | 0.84          | 0.80          | 0.97          | 0.76          |
 
 ## Reproduction for the Competition
-After downloading our dataset and the competition dataset and unpacking both into the data folder. The path to the competition dataset should be something like `data/ethz-cil-road-segmentation-2023/` with the subfolders `training` and `test`.
+After downloading our dataset and the competition dataset and unpacking both into the data folder. The path to the competition dataset should be something like `data/ethz-cil-road-segmentation-2023/` with the subfolders `training` and `test`. Our dataset should be under `data/additonal_data/`
 Next one can simply run the `train_our_model.py` file, setting the `--tmpdir` to the folder containing the `additional_data` folder, to train the RA-DUCKNet model this will take a long time as we trained for multiple days. To train the SMP models first use the `smp.py` file with the following options for the specific options:
 ```
 model_name=UnetPlusPlus/DeepLabV3Plus
