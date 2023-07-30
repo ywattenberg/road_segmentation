@@ -100,7 +100,7 @@ class Scoped_conv2D(nn.Module):
             nn.BatchNorm2d(self.out_channels),
         )
         self.wide = nn.Sequential(
-            nn.Conv2d(self.in_channels, self.out_channels, kernel_size=3, padding='same', dilation=3),
+            nn.Conv2d(self.out_channels, self.out_channels, kernel_size=3, padding='same', dilation=3),
             nn.ReLU(),
             nn.BatchNorm2d(self.out_channels),
         )

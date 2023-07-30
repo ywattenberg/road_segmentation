@@ -31,8 +31,8 @@ class BaseDataset(Dataset):
             ]
         )
         self.norm = transforms.Normalize(
-            mean=[0.48, 0.478, 0.449, 0.5], std=[0.211, 0.196, 0.200, 0.5]
-        )
+                mean=[0.48, 0.478, 0.449], std=[0.211, 0.196, 0.200])
+
 
         self.pad = transforms.Pad(56, fill=(0))
         # self.color_augment = transforms.v2.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.2)
@@ -78,6 +78,7 @@ class ETHDataset(BaseDataset):
     def __getitem__(self, index):
         # Image should be in RGBA format
         image = Image.open(os.path.join(self.image_path, self.image_list[index]))
+        image = image.convert("RGB")
         image = transforms.ToTensor()(image)
 
         if self.normalize:
@@ -93,12 +94,12 @@ class ETHDataset(BaseDataset):
 
             augmented_stack = (
                 self.augment_image(image, mask, skeleton)
-                if self.augment
+                if self.augment_images
                 else [image, mask, skeleton]
             )
         else:
             augmented_stack = (
-                self.augment_image(image, mask) if self.augment else [image, mask]
+                self.augment_image(image, mask) if self.augment_images else [image, mask]
             )
         return self.resize(*augmented_stack)
 
@@ -114,14 +115,15 @@ class MassachusettsDataset(BaseDataset):
         self.length = len(self.image_list)
 
     def __getitem__(self, index):
-        image = Image.open(os.path.join(self.image_path, self.image_list[index]))
-        # .convert("RGBA")
+        image = Image.open(
+            os.path.join(self.image_path, self.image_list[index])
+        )
         mask = Image.open(os.path.join(self.mask_path, self.image_list[index])[:-1])
         image = transforms.ToTensor()(image)
         mask = transforms.ToTensor()(mask)
         resized = transforms.RandomCrop(400, 0)(torch.cat([image, mask]))
-        image = resized[0:4, :, :]
-        mask = resized[4, :, :]
+        image = resized[0:3, :, :]
+        mask = resized[3, :, :]
 
         if self.augment_images:
             augmented_stack = self.augment_image(image, mask.unsqueeze(0))
@@ -137,7 +139,7 @@ class GMapsDataset(ETHDataset):
         # Image should be in RGBA format
         image = Image.open(
             os.path.join(self.image_path, self.image_list[index])
-        ).convert("RGB")
+        )
         image = transforms.ToTensor()(image)
 
         mask = Image.open(os.path.join(self.mask_path, self.image_list[index]))
