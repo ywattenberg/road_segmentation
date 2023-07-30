@@ -17,6 +17,7 @@ a ground truth mask from urban areas in the United States.
 - [Dataset](#dataset)
 - [Training](#training)
 - [Results](#results)
+- [Reproduction for the Competition](#reproduction-for-the-competition)
   
 ## Installing Requirements
 All requirements can be found in the `requirements.txt` and can be installed using 
@@ -46,8 +47,8 @@ greater area around US cities namely Los Angeles, Boston,
 Houston, Chicago, Phoenix, Philadelphia, and San Francisco
 which have an especially clear street and highway network.
 For the ground truth, we also used Google Maps.
-As Google Maps is proprietary, we cannot share the dataset. However, we provide the code to create your own dataset from Google Maps in the `data` folder.
-We can be reached at per [Mail](ywattenberg@ethz.ch) for further questions.
+We provide the dataset [here](link)
+
 ## Training
 For training, our model one can use the `main.py` file in the `src` folder. The file contains all the necessary parameters to train the model.
 
@@ -55,4 +56,15 @@ The SMP models can be trained using the `smp.py` file in the `src` folder. With 
 
 We trained all our models on a single Nvidia A100 GPU (80GB) for around 20 Epochs.
 ## Results
+| Model      | IoU         | F1            | F2            | Accuracy      | Recall        |
+|------------|-------------|---------------|---------------|---------------|---------------|
+| UNet       | 0.58        | 0.73          | 0.71          | 0.95          | 0.68          |
+| ResAttUNet | 0.60        | 0.75          | 0.72          | 0.95          | 0.68          |
+| RA-DUCKNet | 0.68        | 0.81          | 0.78          | 0.97          | 0.74          |
+| DeepLabV3+ | 0.71        | 0.83          | 0.79          | 0.97          | 0.75          |
+| UNet++     | 0.73        | 0.84          | 0.80          | 0.97          | 0.76          |
+
+## Reproduction for the Competition
+
+
 
