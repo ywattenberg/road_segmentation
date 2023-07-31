@@ -18,6 +18,8 @@ def plot_model_comp(csv_dir="model-comparison"):
             model_name = "Unet++"
         elif file.split("-")[0] == "DeepLabV3Plus":
             model_name = "DeepLabV3+"
+        else:
+            model_name = file.split("-")[0]
 
         df = df[df["epoch"] < 10]
         plt.plot(df["epoch"], df["DiceLoss"], label=model_name)
@@ -70,6 +72,8 @@ def plot_model_encoder_comp(csv_dir="encoder-comparison"):
             model_name = "Unet++"
         elif file.split("-")[0] == "DeepLabV3Plus":
             model_name = "DeepLabV3+"
+        else:
+            model_name = file.split("-")[0]
 
         if file.split("-")[1] != "efficientnet":
             label = f"{model_name}, {file.split('-')[1]}"
