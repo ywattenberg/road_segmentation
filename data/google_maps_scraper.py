@@ -65,9 +65,7 @@ def fetch_image(x, y, zoom_=18, width_=600, height_=600):
     sat_maptype = "&maptype=satellite"
     road_maptype = "&maptype=roadmap"
     no_banners = "&style=feature:all|element:labels|visibility:off"
-    # api_key = "&key=" + "AIzaSyClkpTDJuocNePzROobsV6cAP_6NfzdwaA"
-    # api_key = "&key=" + "AIzaSyBuaGWpuAPeNiFZEO-29Rxo0948XEY8A9Y"
-    api_key = "&key=" + "AIzaSyDhB2YHQzo6TYIe_B6mqoMuzGXTDEVKsR8"
+    api_key = "&key=" + "YOUR_KEY_HERE"
 
     sat_url = url + center + zoom + size + sat_maptype + no_banners + api_key
     road_url = (

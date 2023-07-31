@@ -1,3 +1,4 @@
+click
 torch~=2.0
 torchvision~=0.15.2
 numpy
@@ -7,3 +8,7 @@ matplotlib
 segmentation-models-pytorch==0.3.3
 absl-py
 lion-pytorch==0.1.2
+ttach
+tqdm
+scikit-image
+scipy

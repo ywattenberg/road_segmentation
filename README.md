@@ -6,7 +6,7 @@ a new architecture that combines the main building blocks
 of these two models. We call this model Residual
 Attention DUCKNet (RA-DUCKNet).
 
-Further, we created a new dataset containing some 65’000 satellite images with
+Further, we created a new dataset containing some 90’000 satellite images with
 a ground truth mask from urban areas in the United States. 
 
 ## Contents
@@ -17,6 +17,7 @@ a ground truth mask from urban areas in the United States.
 - [Dataset](#dataset)
 - [Training](#training)
 - [Results](#results)
+- [Reproduction for the Competition](#reproduction-for-the-competition)
   
 ## Installing Requirements
 All requirements can be found in the `requirements.txt` and can be installed using 
@@ -38,21 +39,41 @@ The Downsample/Upsample blocks with CBAM use a spatial and channel attention mod
 ![CBAM](./img/Sample_with_CBAM.png)
 (source: Figure 1, Mohammed 2022 [paper](https://arxiv.org/abs/2210.08506))
 
-We further use an EfficientNet-B5 model for feature extraction which are then fed into the UNet like structure at the appropriate levels.
+We further use an EfficientNet-B5 model for feature extraction which is then fed into the UNet-like structure at the appropriate levels.
 
 ## Dataset
-We build our own dataset from satellite images from Google Maps. In total, we pulled 65k aerial images of the
+We build our own dataset from satellite images from Google Maps. In total, we pulled 90k aerial images of the
 greater area around US cities namely Los Angeles, Boston,
 Houston, Chicago, Phoenix, Philadelphia, and San Francisco
 which have an especially clear street and highway network.
 For the ground truth, we also used Google Maps.
-As Google Maps is proprietary, we cannot share the dataset. However, we provide the code to create your own dataset from Google Maps in the `data` folder.
-We can be reached at per [Mail](ywattenberg@ethz.ch) for further questions.
+We provide the dataset [here](https://polybox.ethz.ch/index.php/s/TzqRXKWO1PkWAop)
+
 ## Training
 For training, our model one can use the `main.py` file in the `src` folder. The file contains all the necessary parameters to train the model.
 
-The SMP models can be trained using the `smp.py` file in the `src` folder. With the options `--model` one can specify a non-default decoder. The same can be done for the encoder with `--encoder`. For further options see the file. 
+The SMP models can be trained using the `smp.py` file in the `src` folder. With the option `--model` one can specify a non-default decoder. The same can be done for the encoder with `--encoder`. For further options see the file. 
 
 We trained all our models on a single Nvidia A100 GPU (80GB) for around 20 Epochs.
 ## Results
+| Model      | IoU         | F1            | F2            | Accuracy      | Recall        |
+|------------|-------------|---------------|---------------|---------------|---------------|
+| UNet       | 0.58        | 0.73          | 0.71          | 0.95          | 0.68          |
+| ResAttUNet | 0.60        | 0.75          | 0.72          | 0.95          | 0.68          |
+| RA-DUCKNet | 0.68        | 0.81          | 0.78          | 0.97          | 0.74          |
+| DeepLabV3+ | 0.71        | 0.83          | 0.79          | 0.97          | 0.75          |
+| UNet++     | 0.73        | 0.84          | 0.80          | 0.97          | 0.76          |
 
+## Reproduction for the Competition
+After downloading our dataset and the competition dataset and unpacking both into the data folder. The path to the competition dataset should be something like `data/ethz-cil-road-segmentation-2023/` with the subfolders `training` and `test`. Our dataset should be under `data/additonal_data/`
+Next one can simply run the `train_our_model.py` file, setting the `--tmpdir` to the folder containing the `additional_data` folder, to train the RA-DUCKNet model this will take a long time as we trained for multiple days. To train the SMP models first use the `smp.py` file with the following options for the specific options:
+```
+model_name=UnetPlusPlus/DeepLabV3Plus
+encoder_name=efficientnet-b5
+encoder_weight=imagenet
+epochs=30
+batch_size=32
+learning_rate=0.0001
+```
+Choosing either model name. After that, the model can be fine-tuned using the `smp_dice.py` file with the same options setting the `--load-model` option and lowering the lr to 0.00001.
+To finally create a submission one can use `make_smp_ensamble_submission.py -w -b 16 -o "ensemble-tta.csv" -bm -tta`
